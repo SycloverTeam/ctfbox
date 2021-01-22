@@ -1,7 +1,7 @@
 ## ctfbox 
 **A box for CTF challenges with some sugar functions, Just Enjoy it**
 
-Current version: **1.0.1**
+Current version: **1.0.2**
 
 Please use python **3.6+**
 
@@ -63,6 +63,23 @@ Some functions Write by ourselves
    # provide some files
    provide(files=[("test.txt", ), ("index.html", )])
    ```
+- hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange: int = 1000000, threadNum: int = 25, hashType: HashType = HashType.MD5) -> str
+   ```
+   A function used to blast the first few bits of the hash, often used to crack the ctf verification code
+   ```
+   Here is some examples.
+   ```python
+   ### HashType optional value: HashType.MD5, HashType.SHA1, HashType.SHA256, HashType.SHA512
+   ### Crack the first five number MD5 type ctf verification codes
+   print(hashAuth(answer="02fcf"))
+   ### Crack the first five number SHA1 type ctf verification codes
+   print(hashAuth(answer="d13ce", hashType=HashType.SHA1))
+   #### Crack more quickly!!
+   print(hashAuth(answer="c907773", endIndex=7, threadNum=50))
+   ### Make the range bigger!!
+   print(hashAuth(answer="59e711d", endIndex=7, maxRange=2000000))
+   ```
+
 
 ## Techniques
 - [pdm](https://github.com/frostming/pdm)
@@ -72,7 +89,9 @@ Some functions Write by ourselves
 - requests
 
 ## Logs
-### V1.1.0
+### v1.0.2
+- update Readme.md
+### V1.0.1
 - update Readme.md
 ### V1.0.0
 - first commit

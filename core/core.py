@@ -56,7 +56,9 @@ def provide(host: str = "0.0.0.0", port: int = 2005, isasync: bool = False,  fil
 
 
 def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange: int = 1000000, threadNum: int = 25, hashType: HashType = HashType.MD5) -> str:
-
+    """
+    A function used to blast the first few bits of the hash, often used to crack the ctf verification code
+    """
     if hashType not in HASHTYPE_DICT:
         raise ArugmentError("HashType type error")
 

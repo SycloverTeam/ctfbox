@@ -1,0 +1,61 @@
+[[package]]
+name = "certifi"
+sections = ["default"]
+version = "2020.12.5"
+summary = "Python package for providing Mozilla's CA Bundle."
+
+[[package]]
+name = "chardet"
+sections = ["default"]
+version = "4.0.0"
+summary = "Universal encoding detector for Python 2 and 3"
+
+[[package]]
+name = "idna"
+sections = ["default"]
+version = "2.10"
+summary = "Internationalized Domain Names in Applications (IDNA)"
+
+[[package]]
+name = "requests"
+sections = ["default"]
+version = "2.25.1"
+summary = "Python HTTP for Humans."
+
+[package.dependencies]
+chardet = "<5,>=3.0.2"
+idna = "<3,>=2.5"
+urllib3 = "<1.27,>=1.21.1"
+certifi = ">=2017.4.17"
+
+[[package]]
+name = "urllib3"
+sections = ["default"]
+version = "1.26.2"
+summary = "HTTP library with thread-safe connection pooling, file post, and more."
+
+[metadata]
+lock_version = "2"
+content_hash = "sha256:784298d34ff4cc3f669257203d2ecf6a726438f68cccaf80c7ef65914cc6a3c8"
+
+[metadata.files]
+"certifi 2020.12.5" = [
+    {file = "certifi-2020.12.5-py2.py3-none-any.whl", hash = "sha256:719a74fb9e33b9bd44cc7f3a8d94bc35e4049deebe19ba7d8e108280cfd59830"},
+    {file = "certifi-2020.12.5.tar.gz", hash = "sha256:1a4995114262bffbc2413b159f2a1a480c969de6e6eb13ee966d470af86af59c"},
+]
+"chardet 4.0.0" = [
+    {file = "chardet-4.0.0-py2.py3-none-any.whl", hash = "sha256:f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5"},
+    {file = "chardet-4.0.0.tar.gz", hash = "sha256:0d6f53a15db4120f2b08c94f11e7d93d2c911ee118b6b30a04ec3ee8310179fa"},
+]
+"idna 2.10" = [
+    {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
+    {file = "idna-2.10.tar.gz", hash = "sha256:b307872f855b18632ce0c21c5e45be78c0ea7ae4c15c828c20788b26921eb3f6"},
+]
+"requests 2.25.1" = [
+    {file = "requests-2.25.1-py2.py3-none-any.whl", hash = "sha256:c210084e36a42ae6b9219e00e48287def368a26d03a048ddad7bfee44f75871e"},
+    {file = "requests-2.25.1.tar.gz", hash = "sha256:27973dd4a904a4f13b263a19c866c13b92a39ed1c964655f025f3f8d3d75b804"},
+]
+"urllib3 1.26.2" = [
+    {file = "urllib3-1.26.2-py2.py3-none-any.whl", hash = "sha256:d8ff90d979214d7b4f8ce956e80f4028fc6860e4431f731ea4a8c08f23f99473"},
+    {file = "urllib3-1.26.2.tar.gz", hash = "sha256:19188f96923873c92ccb987120ec4acaa12f0461fa9ce5d3d0772bc965a39e08"},
+]

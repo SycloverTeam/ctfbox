@@ -1,6 +1,6 @@
 [project]
 name = "ctfbox"
-version = "1.0.0"
+version = "1.0.1"
 description = ""
 authors = [
     {name = "Syclover", email = "toloveu29@gmail.com"},
@@ -12,9 +12,10 @@ dev-dependencies = []
 requires-python = ">=3.7"
 dynamic = ["classifiers"]
 license = {text = "MIT"}
+readme = "README.md"
 
 [project.urls]
-homepage = ""
+homepage = "https://github.com/WAY29/ctfbox"
 
 [tool]
 [tool.pdm]

@@ -1,14 +1,16 @@
 ## ctfbox 
 **A box for CTF challenges with some sugar functions, Just Enjoy it**
 
-Current version: **1.0.0**
+Current version: **1.0.1**
 
-Please use python 3.6+
+Please use python **3.6+**
 
 ## Functions
 
 ### utils
 Some functions with names similar to PHP, close to intuition
+- url_encode(s: str, encoding: str = 'utf-8') -> str
+- url_decode(s: str, encoding: str = 'utf-8') -> str
 - base64_decode(s: str, encoding='utf-8') -> str
 - base64_encode(s: str, encoding='utf-8') -> str
 - json_encode(obj) -> object
@@ -61,3 +63,16 @@ Some functions Write by ourselves
    # provide some files
    provide(files=[("test.txt", ), ("index.html", )])
    ```
+
+## Techniques
+- [pdm](https://github.com/frostming/pdm)
+- [version-helper](https://github.com/WAY29/version-helper/)
+
+## Depends
+- requests
+
+## Logs
+### V1.1.0
+- update Readme.md
+### V1.0.0
+- first commit

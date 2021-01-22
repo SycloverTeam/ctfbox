@@ -18,7 +18,7 @@ def url_encode(s: str, encoding: str = 'utf-8') -> str:
         return quote_plus(s, encoding=encoding)
     except Exception:
         return ""
- 
+
 
 def url_decode(s: str, encoding: str = 'utf-8') -> str:
     try:

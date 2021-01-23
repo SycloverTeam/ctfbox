@@ -1,7 +1,7 @@
 ## ctfbox 
 **A box for CTF challenges with some sugar functions, Just enjoy it**
 
-Current version: **1.1.0**
+Current version: **1.1.1**
 
 Please use python **3.6+**
 
@@ -163,6 +163,9 @@ Syclover
    - [pjx](https://github.com/pjx206)
 
 ## Logs
+### v1.1.1
+- move project to new directory
+- update Readme.md, added missing functions
 ### v1.1.0
 - add pwn part, please see Pwn Usage
 - add some functions that may be used in reverse

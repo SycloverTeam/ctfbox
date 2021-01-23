@@ -21,6 +21,7 @@ from ctfbox import * # Will not import the pwn part, please check the Pwn Usage 
 
 ### Pwn Usage
 ```python
+# Don't support windows
 from pwn import * # import pwntools
 # set pwntools config...
 # context.os = 'linux'

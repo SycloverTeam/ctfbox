@@ -7,6 +7,7 @@ authors = [
 ]
 dependencies = [
     "requests<3.0.0,>=2.25.1",
+    "PyJWT<3.0.0,>=2.0.1",
 ]
 dev-dependencies = []
 requires-python = ">=3.7"

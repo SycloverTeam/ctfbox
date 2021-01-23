@@ -147,6 +147,7 @@ Some functions Write by ourselves
 
 ## Depends
 - requests
+- PyJWT
 
 ## Contributors
 Syclover
@@ -162,7 +163,7 @@ Syclover
 - update hashAuth functions
   - error if startIndex is less than endIndex
   - if startIndex is zero and length of hash(endIndex - startIndex) is not equal to length of answer, endIndex will be set to length of answer
-- update Readme.md, add usage and contributors
+- update Readme.md, add usage and contributors, Supplementary dependency: PyJWT
 ### v1.0.2
 - update Readme.md
 ### V1.0.1

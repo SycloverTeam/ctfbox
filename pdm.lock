@@ -17,6 +17,12 @@ version = "2.10"
 summary = "Internationalized Domain Names in Applications (IDNA)"
 
 [[package]]
+name = "PyJWT"
+sections = ["default"]
+version = "2.0.1"
+summary = "JSON Web Token implementation in Python"
+
+[[package]]
 name = "requests"
 sections = ["default"]
 version = "2.25.1"
@@ -36,7 +42,7 @@ summary = "HTTP library with thread-safe connection pooling, file post, and more
 
 [metadata]
 lock_version = "2"
-content_hash = "sha256:784298d34ff4cc3f669257203d2ecf6a726438f68cccaf80c7ef65914cc6a3c8"
+content_hash = "sha256:b237fdd431021abb5090f56aa106f7ce125db145b90137cc6a5fc36a7542ee38"
 
 [metadata.files]
 "certifi 2020.12.5" = [
@@ -50,6 +56,10 @@ content_hash = "sha256:784298d34ff4cc3f669257203d2ecf6a726438f68cccaf80c7ef65914
 "idna 2.10" = [
     {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
     {file = "idna-2.10.tar.gz", hash = "sha256:b307872f855b18632ce0c21c5e45be78c0ea7ae4c15c828c20788b26921eb3f6"},
+]
+"pyjwt 2.0.1" = [
+    {file = "PyJWT-2.0.1-py3-none-any.whl", hash = "sha256:b70b15f89dc69b993d8a8d32c299032d5355c82f9b5b7e851d1a6d706dffe847"},
+    {file = "PyJWT-2.0.1.tar.gz", hash = "sha256:a5c70a06e1f33d81ef25eecd50d50bd30e34de1ca8b2b9fa3fe0daaabcf69bf7"},
 ]
 "requests 2.25.1" = [
     {file = "requests-2.25.1-py2.py3-none-any.whl", hash = "sha256:c210084e36a42ae6b9219e00e48287def368a26d03a048ddad7bfee44f75871e"},

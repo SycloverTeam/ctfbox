@@ -84,7 +84,13 @@ Some functions with names similar to PHP, close to intuition
 
 Some functions that may be used in reverse
 - printHex(data: Union[bytes, str], up: bool = True, sep: str = ' ')
+- p16(number: int, sign: str = 'unsigned', endianness: str = 'little') -> bytes
 - p32(number: int, endianess: str = 'little') -> bytes
+- p64(number: int, sign: str = 'unsigned', endianness: str = 'little') -> bytes
+- u16(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int
+- u32(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int
+- u64(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int
+
 
 ### core
 Some functions Write by ourselves

@@ -62,6 +62,15 @@ def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange:
     if hashType not in HASHTYPE_DICT:
         raise ArugmentError("HashType type error")
 
+    hash_len = endIndex - startIndex
+    if hash_len <= 0:
+        raise ArugmentError("startIndex/endIndex error")
+
+    if hash_len != len(answer):
+        if startIndex == 0:
+            endIndex = len(answer)
+        else:
+            raise ArugmentError("Hash length error")
     i = iter(range(maxRange))
     context = Context()
     hashfunc = HASHTYPE_DICT[hashType]

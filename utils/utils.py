@@ -7,7 +7,8 @@ from json import dumps, loads
 from random import choice, randint
 from string import ascii_lowercase, digits
 from urllib.parse import quote_plus, unquote_plus
-
+from struct import pack, unpack
+from typing import Union
 import jwt
 
 DEFAULT_ALPHABET = list(ascii_lowercase + digits)
@@ -132,3 +133,21 @@ def jwt_decode(token: str) -> bytes:
         pass
 
     return b'-'.join(data)
+
+
+def printHex(data: Union[bytes, str], up: bool = True, sep: str = ' '):
+    if isinstance(data, str):
+        data = data.encode()
+    bs = list(data)
+    for i in range(len(bs)):
+        print(('%02X' if up else '%02x') % bs[i], end=sep)
+        if (i+1) % 16 == 0:
+            print()
+
+
+def p32(number: int, endianess: str = 'little') -> bytes:
+    fmt_dic = {
+        "little": "<I",
+        "big": ">I"
+    }
+    return pack(fmt_dic[endianess], number & 0xffffffff)

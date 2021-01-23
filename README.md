@@ -1,9 +1,64 @@
 ## ctfbox 
-**A box for CTF challenges with some sugar functions, Just Enjoy it**
+**A box for CTF challenges with some sugar functions, Just enjoy it**
 
-Current version: **1.0.2**
+Current version: **1.1.0**
 
 Please use python **3.6+**
+
+## Install
+All you need to do is
+```sh
+pip install ctfbox
+```
+
+## Usage
+
+### Common
+```python
+from ctfbox import * # Will not import the pwn part, please check the Pwn Usage section below
+# enjoy it
+```
+
+### Pwn Usage
+```python
+from pwn import * # import pwntools
+# set pwntools config...
+# context.os = 'linux'
+# context.log_level = 'debug'
+# context.arch = 'amd64'
+from ctfbox.pwntools.config import Config # import confit for pwn part of ctfbox
+# set necessary config 
+"""
+Attributes:
+- local(bool) : connect to local binary / remote address, default: True
+- bin(str)    : the binary path, e.g. './pwn'
+- address(str): the remote address, e.g. '127.0.0.1:2333'
+- pie(bool)   : whether the memory address is randomized, default: False
+"""
+Config.local = True
+Config.address = "127.0.0.1:2333"
+Config.bin = "./bin"
+# import pwn part
+from ctfbox.pwn import *
+```
+now you can use the below attributes/functions
+```
+slog // empty dictionary, you can set the leaked address and corresponding name. e.g. slog['libc'] = libc_addr
+elf  // pwntools.ELF(binaray)
+cn   // a connect to local binary or remote address
+re   // lambda of cn.recv(m, t)
+recv // lambda of cn.recv()
+ru   // lambda of cn.recvuntil(x)
+rl   // lambda of cn.recvline()
+sd   // lambda of cn.send(x)
+sl   // lambda of cn.sendline(x)
+ia   // lambda of cn.interactive()
+sla  // lambda of cn.sendlineafter(a, b)
+sa   // lambda of cn.sendafter(a, b)
+gdba // gdba(bps) debug, argument bps save the breakpoint address, breakpoint can also be automatically set when pie is turned on, need pmap command
+slog_show // print all set slogs, in hexadecimal format
+```
+
 
 ## Functions
 
@@ -25,6 +80,8 @@ Some functions with names similar to PHP, close to intuition
 - random_int(minN: int = 0, maxN: int = 1024) -> int
 - random_string(n: int = 32, alphabet: str = "") -> str
 
+Some functions that may be used in reverse
+- printHex(data: Union[bytes, str], up: bool = True, sep: str = ' ')
 
 ### core
 Some functions Write by ourselves
@@ -52,7 +109,7 @@ Some functions Write by ourselves
    ```
    A simple and customizable http server.
    ```
-   Here is some examples.
+   Here are some examples.
    ```python
    # provide a exist file named index.html
    provide(files=[('index.html',)])
@@ -67,7 +124,7 @@ Some functions Write by ourselves
    ```
    A function used to blast the first few bits of the hash, often used to crack the ctf verification code
    ```
-   Here is some examples.
+   Here are some examples.
    ```python
    ### HashType optional value: HashType.MD5, HashType.SHA1, HashType.SHA256, HashType.SHA512
    ### Crack the first five number MD5 type ctf verification codes
@@ -88,7 +145,21 @@ Some functions Write by ourselves
 ## Depends
 - requests
 
+## Contributors
+Syclover
+   - [Longlone](https://github.com/way29)
+   - [F4ded](https://github.com/F4ded)
+   - [lingze](https://github.com/wlingze)
+   - [pjx](https://github.com/pjx206)
+
 ## Logs
+### v1.1.0
+- add pwn part, please see Pwn Usage
+- add some functions that may be used in reverse
+- update hashAuth functions
+  - error if startIndex is less than endIndex
+  - if startIndex is zero and length of hash(endIndex - startIndex) is not equal to length of answer, endIndex will be set to length of answer
+- update Readme.md, add usage and contributors
 ### v1.0.2
 - update Readme.md
 ### V1.0.1

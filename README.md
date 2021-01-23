@@ -162,6 +162,9 @@ Syclover
    - [lingze](https://github.com/wlingze)
    - [pjx](https://github.com/pjx206)
 
+Other
+   - [Morouu](http://github.com/Morouu)
+
 ## Logs
 ### v1.1.1
 - move project to new directory

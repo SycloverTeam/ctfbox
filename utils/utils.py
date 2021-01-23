@@ -183,10 +183,9 @@ def p64(number: int, sign: str = 'unsigned', endianness: str = 'little') -> byte
     return _pN(64, number, sign, endianness)
 
 
-def _uN(N: int, data: bytes, sign: str, endianness: str, ignore_size=True) -> int:
+def _uN(N: int, data: bytes, sign: str, endianness: str, ignore_size: bool) -> int:
     fmt = _get_pack_fmtstr(sign, endianness, N)
 
-    
     if ignore_size:
         size = N // 8
         data_len = len(data)
@@ -197,11 +196,11 @@ def _uN(N: int, data: bytes, sign: str, endianness: str, ignore_size=True) -> in
 
     return unpack(fmt, data)[0]
 
-def u16(data: bytes, sign: str = 'unsigned', endianness: str='little', padding=True) -> int:
-    return _uN(16, data, sign, endianness, padding)
+def u16(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int:
+    return _uN(16, data, sign, endianness, ignore_size)
 
-def u32(data: bytes, sign: str = 'unsigned', endianness: str='little', padding=True) -> int:
-    return _uN(32, data, sign, endianness, padding)
+def u32(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int:
+    return _uN(32, data, sign, endianness, ignore_size)
 
-def u64(data: bytes, sign: str = 'unsigned', endianness: str='little', padding=True) -> int:
-    return _uN(64, data, sign, endianness, padding)
+def u64(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int:
+    return _uN(64, data, sign, endianness, ignore_size)

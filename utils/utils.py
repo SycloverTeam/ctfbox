@@ -145,9 +145,35 @@ def printHex(data: Union[bytes, str], up: bool = True, sep: str = ' '):
             print()
 
 
-def p32(number: int, endianess: str = 'little') -> bytes:
-    fmt_dic = {
-        "little": "<I",
-        "big": ">I"
+def _pN(N: int, number: int, sign: str, endianness: str) -> bytes:
+    byte_order = {
+        'little': '<',
+        'big': '>'
     }
-    return pack(fmt_dic[endianess], number & 0xffffffff)
+    number_type = {
+        'unsigned': {
+            16: 'H',
+            32: 'I',
+            64: 'Q',
+        },
+        'signed': {
+            16: 'h',
+            32: 'i',
+            64: 'q',
+        }
+    }
+    fmt = byte_order[endianness] + number_type[sign][N]
+    # use 0xff...ff and N to calculate a mask
+    return pack(fmt, number & (0xffffffffffffffff >> (64 - N)))
+
+
+def p16(number: int, sign: str = 'unsigned', endianness: str = 'little') -> bytes:
+    return _pN(16, number, sign, endianness)
+
+
+def p32(number: int, sign: str = 'unsigned', endianness: str = 'little') -> bytes:
+    return _pN(32, number, sign, endianness)
+
+
+def p64(number: int, sign: str = 'unsigned', endianness: str = 'little') -> bytes:
+    return _pN(64, number, sign, endianness)

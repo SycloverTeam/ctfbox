@@ -87,6 +87,14 @@ class TestUtils(unittest.TestCase):
         self.assertTrue(result, jwt_encode(
             header_example, payload_example, '123456', 'HS256'))
 
+    def test__pN(self):
+        # when passing number and sign that dosenot match, 
+        # it shall throw exception from python builtin module struct
+        self.assertEqual(b'\xcd\xab', p16(0xabcd))
+        self.assertEqual(b'\xab\xcd', p16(0xabcd, endianness='big'))
+        self.assertEqual(b'\x15\xcd[\x07', p32(123456789))
+        self.assertEqual(b'\x07[\xcd\x15', p32(123456789, endianness='big'))
+
 
 if __name__ == '__main__':
     unittest.main()

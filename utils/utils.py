@@ -145,7 +145,7 @@ def printHex(data: Union[bytes, str], up: bool = True, sep: str = ' '):
             print()
 
 
-def _pN(N: int, number: int, sign: str, endianness: str) -> bytes:
+def _get_pack_fmtstr(sign, endianness, N):
     byte_order = {
         'little': '<',
         'big': '>'
@@ -162,7 +162,11 @@ def _pN(N: int, number: int, sign: str, endianness: str) -> bytes:
             64: 'q',
         }
     }
-    fmt = byte_order[endianness] + number_type[sign][N]
+    return byte_order[endianness] + number_type[sign][N]
+
+
+def _pN(N: int, number: int, sign: str, endianness: str) -> bytes:
+    fmt = _get_pack_fmtstr(sign, endianness, N)
     # use 0xff...ff and N to calculate a mask
     return pack(fmt, number & (0xffffffffffffffff >> (64 - N)))
 
@@ -177,3 +181,27 @@ def p32(number: int, sign: str = 'unsigned', endianness: str = 'little') -> byte
 
 def p64(number: int, sign: str = 'unsigned', endianness: str = 'little') -> bytes:
     return _pN(64, number, sign, endianness)
+
+
+def _uN(N: int, data: bytes, sign: str, endianness: str, ignore_size=True) -> int:
+    fmt = _get_pack_fmtstr(sign, endianness, N)
+
+    
+    if ignore_size:
+        size = N // 8
+        data_len = len(data)
+        if data_len < size:
+            data += b'\x00' * (size - data_len)
+        elif data_len > size:
+            data = data[:size]
+
+    return unpack(fmt, data)[0]
+
+def u16(data: bytes, sign: str = 'unsigned', endianness: str='little', padding=True) -> int:
+    return _uN(16, data, sign, endianness, padding)
+
+def u32(data: bytes, sign: str = 'unsigned', endianness: str='little', padding=True) -> int:
+    return _uN(32, data, sign, endianness, padding)
+
+def u64(data: bytes, sign: str = 'unsigned', endianness: str='little', padding=True) -> int:
+    return _uN(64, data, sign, endianness, padding)

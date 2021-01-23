@@ -1,7 +1,7 @@
-from sys import modules
+from sys import modules, platform
 from os import popen
 
-__all__ = ['slog', 'elf', 'cn', 're', 'recv', 'ru', 'rl', 'sd', 'sl', 'ia', 'sla', 'sa', 'gdba', 'slog_show']
+__all__ = ['slog', 'elf', 'cn', 're', 'recv', 'ru', 'rl', 'sd', 'sl', 'ia', 'sla', 'sa', 'ft', 'gdba', 'slog_show']
 
 
 class ConfigError(Exception):
@@ -9,23 +9,29 @@ class ConfigError(Exception):
 
 
 # ? check
+
+if platform == "win32":
+    raise ImportError("This package not support windows")
+
 if "pwn" not in modules and "pwnlib" not in modules:
-    raise ImportError("please import pwn(pwntools) before import this package")
+    raise ImportError("Please import pwn(pwntools) before import this package")
 
 if "ctfbox.pwntools.config" not in modules:
     raise ImportError(
-        "please import ctfbox.pwntools.config and set necessary attribute before import this package")
+        "Please import ctfbox.pwntools.config and set necessary attribute before import this package")
 else:
     m = modules["ctfbox.pwntools.config"]
     Config = m.Config
     for attr in m._config.necessary_attribute:
         if not hasattr(Config, attr):
             raise ImportError(
-                f"please set Config {attr} for config.Config before import this package")
+                f"Please set Config {attr} for config.Config before import this package")
 
 slog = {}
 # ? set sugar functions
 m = modules["pwn"]
+mm = modules["pwnlib"]
+
 if Config.local is True:
     cn = m.process(Config.bin)
 else:
@@ -51,6 +57,7 @@ sl  = lambda x    : cn.sendline(x)
 ia  = lambda      : cn.interactive()
 sla = lambda a, b : cn.sendlineafter(a, b)
 sa  = lambda a, b : cn.sendafter(a, b)
+ft  = lambda arg, f=mm.util.cyclic.de_bruijn(), l=None: m.flat(*arg, filler=f, length=l)
 
 
 def gdba(bps: list = []):
@@ -58,7 +65,8 @@ def gdba(bps: list = []):
         return
     cmd = 'set follow-fork-mode parent\n'
     if Config.pie:
-        base = int(popen("pmap {}|awk '{{print $1}}'".format(cn.pid)).readlines()[1], 16)
+        binary = Config.bin.split('/')[-1]
+        base = int(popen("pmap {}| grep {} | awk '{{print $1}}'".format(cn.pid, binary)).readlines()[1], 16)
         cmd += ''.join(['b *{:#x}\n'.format(b+base) for b in bps])
         cmd += 'set $base={:#x}\n'.format(base)
         slog["base"] = base

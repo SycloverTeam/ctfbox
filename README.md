@@ -21,6 +21,7 @@ from ctfbox import * # Will not import the pwn part, please check the Pwn Usage 
 
 ### Pwn Usage
 ```python
+# Don't support windows
 from pwn import * # import pwntools
 # set pwntools config...
 # context.os = 'linux'
@@ -55,6 +56,7 @@ sl   // lambda of cn.sendline(x)
 ia   // lambda of cn.interactive()
 sla  // lambda of cn.sendlineafter(a, b)
 sa   // lambda of cn.sendafter(a, b)
+ft   // ft(arg, f=pwnlib.util.cyclic.de_bruijn(), l=None) lambda of flat(*arg, filler=f, length=l)
 gdba // gdba(bps) debug, argument bps save the breakpoint address, breakpoint can also be automatically set when pie is turned on, need pmap command
 slog_show // print all set slogs, in hexadecimal format
 ```
@@ -82,6 +84,7 @@ Some functions with names similar to PHP, close to intuition
 
 Some functions that may be used in reverse
 - printHex(data: Union[bytes, str], up: bool = True, sep: str = ' ')
+- p32(number: int, endianess: str = 'little') -> bytes
 
 ### core
 Some functions Write by ourselves

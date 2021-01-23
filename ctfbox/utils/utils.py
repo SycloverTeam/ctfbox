@@ -135,6 +135,8 @@ def jwt_decode(token: str) -> bytes:
     return b'-'.join(data)
 
 
+# ? Reverse
+
 def printHex(data: Union[bytes, str], up: bool = True, sep: str = ' '):
     if isinstance(data, str):
         data = data.encode()
@@ -196,11 +198,14 @@ def _uN(N: int, data: bytes, sign: str, endianness: str, ignore_size: bool) -> i
 
     return unpack(fmt, data)[0]
 
-def u16(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int:
+
+def u16(data: bytes, sign: str = 'unsigned', endianness: str = 'little', ignore_size=True) -> int:
     return _uN(16, data, sign, endianness, ignore_size)
 
-def u32(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int:
+
+def u32(data: bytes, sign: str = 'unsigned', endianness: str = 'little', ignore_size=True) -> int:
     return _uN(32, data, sign, endianness, ignore_size)
 
-def u64(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int:
+
+def u64(data: bytes, sign: str = 'unsigned', endianness: str = 'little', ignore_size=True) -> int:
     return _uN(64, data, sign, endianness, ignore_size)

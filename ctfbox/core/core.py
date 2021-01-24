@@ -145,9 +145,8 @@ def _parse_form_data(body, encoding: str = "utf-8"):
                 content_type = "text/plain"
 
         body_content = b'\n'.join(file_bodys)
-        body_string = body_content.decode(encoding=encoding)
         if filename == b"":
-            parse_dict["data"][field] = body_string
+            parse_dict["data"][field] = body_content
         else:
             parse_dict["files"][field] = (
                 filename.decode(), body_content, content_type.decode())
@@ -156,6 +155,20 @@ def _parse_form_data(body, encoding: str = "utf-8"):
 
 
 def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
+    """Send raw request by python-requests
+
+   Args:
+    raw(bytes/str): raw http request
+    kwargs:
+        proxies(dict) : requests proxies
+        timeout(float): requests timeout
+        verify(bool)  : requests verify
+        real_host(str): use real host instead of Host if set
+        ssl(bool)     : whether https
+
+    Returns:
+        bytes: The packed bytes
+    """
     if isinstance(raw, str):
         raw = raw.encode()
     # ? Origin: https://github.com/boy-hack/hack-requests
@@ -166,12 +179,14 @@ def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
     real_host = kwargs.get("real_host", None)
     ssl = kwargs.get("ssl", False)
 
+    if real_host:
+        real_host = real_host.encode()
     # ? Judgment scheme
     scheme = 'http'
-    port = 80
+    port = b"80"
     if ssl:
         scheme = 'https'
-        port = 443
+        port = b"443"
 
     try:
         index = raw.index(b'\n')
@@ -222,7 +237,7 @@ def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
         body = b'\n'.join(raws[index + 1:]).lstrip()
 
     # ? get url
-    url = f"{scheme}://{host.decode()}:{port}/{path.decode()}"
+    url = f"{scheme}://{host.decode()}:{port.decode()}/{path.decode()}"
     # ? get content-length
     if body and "Content-Length" not in headers and "Transfer-Encoding" not in headers:
         headers["Content-Length"] = str(len(body))
@@ -240,8 +255,10 @@ def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
     elif _is_json(body) and headers["Content-Type"] not in ["application/json", "multipart/form-data"]:
         headers["Content-Type"] = "application/json"
     if headers["Content-Type"] == "application/x-www-form-urlencoded":
-        body = dict([l.split("=")
-                     for l in body.strip().split(";") if "=" in l])
+        body = dict([l.split(b"=")
+                     for l in body.strip().split(b"&") if b"=" in l])
+        body = {k.strip().decode(): v.strip().decode()
+                for k, v in body.items()}
     elif headers["Content-Type"] == "multipart/form-data":
         parse_dict = _parse_form_data(body)
         body = parse_dict["data"]

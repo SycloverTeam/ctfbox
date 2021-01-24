@@ -145,9 +145,8 @@ def _parse_form_data(body, encoding: str = "utf-8"):
                 content_type = "text/plain"
 
         body_content = b'\n'.join(file_bodys)
-        body_string = body_content.decode(encoding=encoding)
         if filename == b"":
-            parse_dict["data"][field] = body_string
+            parse_dict["data"][field] = body_content
         else:
             parse_dict["files"][field] = (
                 filename.decode(), body_content, content_type.decode())

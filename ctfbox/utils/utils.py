@@ -139,10 +139,12 @@ def jwt_decode(token: str) -> bytes:
 
     return b'-'.join(data)
 
+
 # ? web
 
 
-def get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app", appName: str = "Flask") -> str:
+def get_flask_pin(username: str, absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app",
+                  appName: str = "Flask") -> str:
     rv, num = None, None
     probably_public_bits = [
         username,
@@ -181,6 +183,70 @@ def get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: 
     return rv
 
 
+# flask_session_helper
+
+def check_import():
+    try:
+        from flask.sessions import SecureCookieSessionInterface
+    except ImportError:
+        return "Please install moudle Flask. e.g. python3 -m pip install flask"
+
+
+class App:
+    def __init__(self, secret_key: str):
+        self.secret_key = secret_key
+
+
+def flask_session_encode(secret_key: str, payload: dict):
+    """encode flask session
+
+    Args:
+        secret_key: secret_key
+        payload: The data you want to encode
+
+    Returns:
+        str: session data
+
+    """
+    try:
+        from flask.sessions import SecureCookieSessionInterface
+        try:
+            app = App(secret_key)
+            scsi = SecureCookieSessionInterface()
+            s = scsi.get_signing_serializer(app)
+
+            return s.dumps(payload)
+        except Exception as e:
+            return f"![Encoding Error] : {e}"
+    except ImportError:
+        return "Please install moudle Flask. e.g. python3 -m pip install flask"
+
+
+def flask_session_decode(session_data: str, secret_key: str):
+    """decode flask session
+
+    Args:
+        session_data: The session you want to decode
+        secret_key: secret_key
+
+    Returns:
+        dict: session data information
+
+    """
+    try:
+        from flask.sessions import SecureCookieSessionInterface
+        try:
+            app = App(secret_key)
+            scsi = SecureCookieSessionInterface()
+            s = scsi.get_signing_serializer(app)
+
+            return s.loads(session_data)
+        except Exception as e:
+            return f"![Decoding Error] : {e}"
+    except ImportError:
+        return "Please install moudle Flask. e.g. python3 -m pip install flask"
+
+
 # ? Reverse
 
 def printHex(data: Union[bytes, str], up: bool = True, sep: str = ' '):
@@ -189,7 +255,7 @@ def printHex(data: Union[bytes, str], up: bool = True, sep: str = ' '):
     bs = list(data)
     for i in range(len(bs)):
         print(('%02X' if up else '%02x') % bs[i], end=sep)
-        if (i+1) % 16 == 0:
+        if (i + 1) % 16 == 0:
             print()
 
 
@@ -326,7 +392,8 @@ def std_b32table() -> bytes:
     Returns:
         bytes: Base32 table in bytes format, use std_b64table().decode() to get a 'str' one
     """
-    return b32encode(bytes(list(map(lambda x: int(x, 2), re.findall('.{8}', ''.join(map(lambda x: bin(x)[2:].zfill(5), list(range(32)))))))))
+    return b32encode(bytes(list(
+        map(lambda x: int(x, 2), re.findall('.{8}', ''.join(map(lambda x: bin(x)[2:].zfill(5), list(range(32)))))))))
 
 
 def std_b64table() -> bytes:
@@ -335,7 +402,9 @@ def std_b64table() -> bytes:
     Returns:
         bytes: Base64 table in bytes format, use std_b64table().decode() to get a 'str' one
     """
-    return b64encode(bytes(list(map(lambda x: int(x, 2), re.findall('.{8}', ''.join(map(lambda x: bin(x)[2:].zfill(6), list(range(64)))))))))
+    return b64encode(bytes(list(
+        map(lambda x: int(x, 2), re.findall('.{8}', ''.join(map(lambda x: bin(x)[2:].zfill(6), list(range(64)))))))))
+
 
 # ? other
 
@@ -350,7 +419,7 @@ def od_parse(data: str) -> Dict[str, Union[str, list]]:
         for d in line.split(" ")[1:]:
             h = hex(int(d, 8))[2:].zfill(4)
             a, b = int(h[2:], 16), int(h[:2], 16)
-            text += chr(a)+chr(b)
+            text += chr(a) + chr(b)
             hex_data += "0x%x 0x%x " % (a, b)
             asc_data += "%s %s " % (a, b)
             list_data += [a, b]

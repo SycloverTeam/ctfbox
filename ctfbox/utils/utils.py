@@ -8,7 +8,8 @@ from random import choice, randint
 from string import ascii_lowercase, digits
 from urllib.parse import quote_plus, unquote_plus
 from struct import pack, unpack
-from typing import Union
+from typing import Union, Dict
+from itertools import chain
 import jwt
 
 DEFAULT_ALPHABET = list(ascii_lowercase + digits)
@@ -134,6 +135,49 @@ def jwt_decode(token: str) -> bytes:
 
     return b'-'.join(data)
 
+# ? web
+
+
+def get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app", appName: str = "Flask") -> str:
+    rv, num = None, None
+    probably_public_bits = [
+        username,
+        modName,
+        # getattr(app, '__name__', getattr(app.__class__, '__name__'))
+        appName,
+        # getattr(mod, '__file__', None),
+        absRootPath,
+    ]
+
+    private_bits = [
+        # str(uuid.getnode()),  /sys/class/net/ens33/address
+        str(int(macAddress.strip().replace(":", ""), 16)),
+        machineId,  # get_machine_id(), /etc/machine-id
+    ]
+
+    h = _md5()
+    for bit in chain(probably_public_bits, private_bits):
+        if not bit:
+            continue
+        if isinstance(bit, str):
+            bit = bit.encode('utf-8')
+        h.update(bit)
+    h.update(b'cookiesalt')
+
+    h.update(b'pinsalt')
+    num = ('%09d' % int(h.hexdigest(), 16))[:9]
+
+    for group_size in 5, 4, 3:
+        if len(num) % group_size == 0:
+            rv = '-'.join(num[x:x + group_size].rjust(group_size, '0')
+                          for x in range(0, len(num), group_size))
+            break
+    else:
+        rv = num
+    return rv
+
+
+# ? Reverse
 
 def printHex(data: Union[bytes, str], up: bool = True, sep: str = ' '):
     if isinstance(data, str):
@@ -196,11 +240,29 @@ def _uN(N: int, data: bytes, sign: str, endianness: str, ignore_size: bool) -> i
 
     return unpack(fmt, data)[0]
 
-def u16(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int:
+
+def u16(data: bytes, sign: str = 'unsigned', endianness: str = 'little', ignore_size=True) -> int:
     return _uN(16, data, sign, endianness, ignore_size)
 
-def u32(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int:
+
+def u32(data: bytes, sign: str = 'unsigned', endianness: str = 'little', ignore_size=True) -> int:
     return _uN(32, data, sign, endianness, ignore_size)
 
-def u64(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int:
+
+def u64(data: bytes, sign: str = 'unsigned', endianness: str = 'little', ignore_size=True) -> int:
     return _uN(64, data, sign, endianness, ignore_size)
+
+
+# ? other
+
+def od_parse(data: str) -> Dict[str, Union[str, list]]:
+    text, asc_data, hex_data, list_data = "", "", "", []
+    for line in data.split("\n"):
+        for d in line.split(" ")[1:]:
+            h = hex(int(d, 8))[2:].zfill(4)
+            a, b = int(h[2:], 16), int(h[:2], 16)
+            text += chr(a)+chr(b)
+            hex_data += "0x%x 0x%x " % (a, b)
+            asc_data += "%s %s " % (a, b)
+            list_data += [a, b]
+    return {"hex": hex_data.strip(), "ascii": asc_data.strip(), "list": list_data, "text": text}

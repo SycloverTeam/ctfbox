@@ -1,7 +1,7 @@
 ## ctfbox 
 **A box for CTF challenges with some sugar functions, Just enjoy it**
 
-Current version: **1.1.0**
+Current version: **1.1.1**
 
 Please use python **3.6+**
 
@@ -21,6 +21,7 @@ from ctfbox import * # Will not import the pwn part, please check the Pwn Usage 
 
 ### Pwn Usage
 ```python
+# Don't support windows
 from pwn import * # import pwntools
 # set pwntools config...
 # context.os = 'linux'
@@ -55,6 +56,7 @@ sl   // lambda of cn.sendline(x)
 ia   // lambda of cn.interactive()
 sla  // lambda of cn.sendlineafter(a, b)
 sa   // lambda of cn.sendafter(a, b)
+ft   // ft(arg, f=pwnlib.util.cyclic.de_bruijn(), l=None) lambda of flat(*arg, filler=f, length=l)
 gdba // gdba(bps) debug, argument bps save the breakpoint address, breakpoint can also be automatically set when pie is turned on, need pmap command
 slog_show // print all set slogs, in hexadecimal format
 ```
@@ -80,8 +82,25 @@ Some functions with names similar to PHP, close to intuition
 - random_int(minN: int = 0, maxN: int = 1024) -> int
 - random_string(n: int = 32, alphabet: str = "") -> str
 
+Some functions that may be used in web
+- get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app", appName: str = "Flask") -> str
+
 Some functions that may be used in reverse
 - printHex(data: Union[bytes, str], up: bool = True, sep: str = ' ')
+- p16(number: int, sign: str = 'unsigned', endianness: str = 'little') -> bytes
+- p32(number: int, endianess: str = 'little') -> bytes
+- p64(number: int, sign: str = 'unsigned', endianness: str = 'little') -> bytes
+- u16(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int
+- u32(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int
+- u64(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int
+
+Some functions that may be used in misc
+
+***TODO***
+
+Some other functions
+- od_parse(data: str) -> Dict[str, Union[str, list]] // parse od command output without argument, return a dict with the following keys: hex, ascii, list, text
+
 
 ### core
 Some functions Write by ourselves
@@ -144,6 +163,7 @@ Some functions Write by ourselves
 
 ## Depends
 - requests
+- PyJWT
 
 ## Contributors
 Syclover
@@ -152,14 +172,25 @@ Syclover
    - [lingze](https://github.com/wlingze)
    - [pjx](https://github.com/pjx206)
 
+Other
+   - [Morouu](http://github.com/Morouu)
+
 ## Logs
+### 1.2.0(TODO)
+- add dev dependencies: icecream
+- add some functions:
+    - od_parse
+    - get_flask_pin
+### v1.1.1
+- move project to new directory
+- update Readme.md, added missing functions
 ### v1.1.0
 - add pwn part, please see Pwn Usage
 - add some functions that may be used in reverse
 - update hashAuth functions
   - error if startIndex is less than endIndex
   - if startIndex is zero and length of hash(endIndex - startIndex) is not equal to length of answer, endIndex will be set to length of answer
-- update Readme.md, add usage and contributors
+- update Readme.md, add usage and contributors, Supplementary dependency: PyJWT
 ### v1.0.2
 - update Readme.md
 ### V1.0.1

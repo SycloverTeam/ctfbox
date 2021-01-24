@@ -100,6 +100,14 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(0xabcd, u16(b'\xab\xcd', endianness='big'))
         self.assertEqual(0x00ab, u16(b'\xab'))
         self.assertEqual(0x61626364, u32(b'dcba'))
+    
+    def test_od_parse(self):
+        self.assertEqual(od_parse("""0000000 074523 066143 073157 071145 072173 071545 057564 062157
+0000020 070137 071141 062563 005175
+0000030""")["text"], "Syclover{test_od_parse}\n")
+
+    def test_get_flask_pin(self):
+        self.assertEqual(get_flask_pin("kingkk", "/home/kingkk/.local/lib/python3.5/site-packages/flask/app.py", "00:0c:29:e5:45:6a", "19949f18ce36422da1402b3e3fe53008"), "169-851-075")
 
 
 if __name__ == '__main__':

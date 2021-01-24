@@ -91,6 +91,11 @@ Some functions that may be used in reverse
 - u32(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int
 - u64(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int
 
+Some functions that may be used in misc
+# TODO
+
+Some other functions
+- od_parse(data: str) -> Dict[str, Union[str, list]] // parse od command output without argument, return a dict with the following keys: hex, ascii, list, text
 
 ### core
 Some functions Write by ourselves

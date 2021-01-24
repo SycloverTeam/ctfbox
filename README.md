@@ -186,6 +186,9 @@ Other
    - [Morouu](http://github.com/Morouu)
 
 ## Logs
+
+### 1.2.1(TODO)
+- fix a bug that httpraw may not be able to send post request correctly
 ### 1.2.0
 - add dev dependencies: icecream
 - add some functions:

@@ -156,6 +156,20 @@ def _parse_form_data(body, encoding: str = "utf-8"):
 
 
 def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
+    """Send raw request by python-requests
+
+   Args:
+    raw(bytes/str): raw http request
+    kwargs:
+        proxies(dict) : requests proxies
+        timeout(float): requests timeout
+        verify(bool)  : requests verify
+        real_host(str): use real host instead of Host if set
+        ssl(bool)     : whether https
+
+    Returns:
+        bytes: The packed bytes
+    """
     if isinstance(raw, str):
         raw = raw.encode()
     # ? Origin: https://github.com/boy-hack/hack-requests
@@ -240,8 +254,10 @@ def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
     elif _is_json(body) and headers["Content-Type"] not in ["application/json", "multipart/form-data"]:
         headers["Content-Type"] = "application/json"
     if headers["Content-Type"] == "application/x-www-form-urlencoded":
-        body = dict([l.split("=")
-                     for l in body.strip().split(";") if "=" in l])
+        body = dict([l.split(b"=")
+                     for l in body.strip().split(b";") if b"=" in l])
+        body = {k.strip().decode(): v.strip().decode()
+                for k, v in body.items()}
     elif headers["Content-Type"] == "multipart/form-data":
         parse_dict = _parse_form_data(body)
         body = parse_dict["data"]

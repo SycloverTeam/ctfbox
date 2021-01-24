@@ -337,6 +337,15 @@ def std_b64table() -> bytes:
 # ? other
 
 def od_parse(data: str) -> Dict[str, Union[str, list]]:
+    """parse od command output without argument
+
+
+    Args:
+        data (str): data to be parsed
+
+    Returns:
+        Dict[str, Union[str, list]]: a dict with the following keys: hex, ascii, list, text
+    """
     text, asc_data, hex_data, list_data = "", "", "", []
     for line in data.split("\n"):
         for d in line.split(" ")[1:]:

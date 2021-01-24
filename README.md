@@ -86,14 +86,9 @@ Some functions that may be used in web
 - get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app", appName: str = "Flask") -> str
 
 Some functions that may be used in reverse engineering
-print data in hex format
-`printHex()`
-
-pack number into bytes:
-`p16()`, `p32()`, `p64()`
-
-unpack number from bytes:
-`u16()`, `u32()`, `u64()`
+* print data in hex format: `printHex()`
+* pack number into bytes: `p16()`, `p32()`, `p64()`
+* unpack number from bytes: `u16()`, `u32()`, `u64()`
 
 please refer to source code for functions signatures and usage
 

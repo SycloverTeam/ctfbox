@@ -1,4 +1,4 @@
-from base64 import b64decode, b64encode, urlsafe_b64decode, urlsafe_b64encode
+from base64 import b64decode, b64encode, urlsafe_b64decode, urlsafe_b64encode, b32encode
 from binascii import hexlify, unhexlify
 from hashlib import md5 as _md5
 from hashlib import sha1 as _sha1
@@ -315,6 +315,15 @@ def u64(data: bytes, sign: str = 'unsigned', endianness: str = 'little', ignore_
         int: The unpacked number
     """
     return _uN(64, data, sign, endianness, ignore_size)
+
+
+def std_b32table() -> bytes:
+    """Get a standard Base32 table
+
+    Returns:
+        bytes: Base32 table in bytes format, use std_b64table().decode() to get a 'str' one
+    """
+    return b32encode(bytes(list(map(lambda x: int(x, 2), re.findall('.{8}', ''.join(map(lambda x: bin(x)[2:].zfill(5), list(range(32)))))))))
 
 
 def std_b64table() -> bytes:

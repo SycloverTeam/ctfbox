@@ -192,6 +192,8 @@ Other
     - od_parse
     - get_flask_pin
     - httpraw
+    - p16 p32 p64 and uXX functions
+    - Base32 and Base64 table getter
 ### v1.1.1
 - move project to new directory
 - update Readme.md, added missing functions

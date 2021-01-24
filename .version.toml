@@ -1,6 +1,6 @@
 [main]
   serialize = "{version}-{banner}"
-  tag = false
+  tag = true
   version = "1.2.0"
 
 [[operate]]

@@ -9,6 +9,7 @@ from string import ascii_lowercase, digits
 from urllib.parse import quote_plus, unquote_plus
 from struct import pack, unpack
 from typing import Union, Dict
+from itertools import chain
 import jwt
 
 DEFAULT_ALPHABET = list(ascii_lowercase + digits)
@@ -133,6 +134,47 @@ def jwt_decode(token: str) -> bytes:
         pass
 
     return b'-'.join(data)
+
+# ? web
+
+
+def get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app", className: str = "Flask") -> str:
+    rv, num = None, None
+    probably_public_bits = [
+        username,
+        modName,
+        # getattr(app, '__name__', getattr(app.__class__, '__name__'))
+        className,
+        # getattr(mod, '__file__', None),
+        absRootPath,
+    ]
+
+    private_bits = [
+        # str(uuid.getnode()),  /sys/class/net/ens33/address
+        str(int(macAddress.strip().replace(":", ""), 16)),
+        machineId,  # get_machine_id(), /etc/machine-id
+    ]
+
+    h = _md5()
+    for bit in chain(probably_public_bits, private_bits):
+        if not bit:
+            continue
+        if isinstance(bit, str):
+            bit = bit.encode('utf-8')
+        h.update(bit)
+    h.update(b'cookiesalt')
+
+    h.update(b'pinsalt')
+    num = ('%09d' % int(h.hexdigest(), 16))[:9]
+
+    for group_size in 5, 4, 3:
+        if len(num) % group_size == 0:
+            rv = '-'.join(num[x:x + group_size].rjust(group_size, '0')
+                          for x in range(0, len(num), group_size))
+            break
+    else:
+        rv = num
+    return rv
 
 
 # ? Reverse

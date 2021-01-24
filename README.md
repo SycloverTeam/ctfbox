@@ -92,7 +92,8 @@ Some functions that may be used in reverse
 - u64(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int
 
 Some functions that may be used in misc
-# TODO
+
+***TODO***
 
 Some other functions
 - od_parse(data: str) -> Dict[str, Union[str, list]] // parse od command output without argument, return a dict with the following keys: hex, ascii, list, text
@@ -171,6 +172,9 @@ Other
    - [Morouu](http://github.com/Morouu)
 
 ## Logs
+### 1.2.0(TODO)
+- add some functions:
+    - od_parse
 ### v1.1.1
 - move project to new directory
 - update Readme.md, added missing functions

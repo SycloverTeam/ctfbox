@@ -180,12 +180,14 @@ def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
     real_host = kwargs.get("real_host", None)
     ssl = kwargs.get("ssl", False)
 
+    if real_host:
+        real_host = real_host.encode()
     # ? Judgment scheme
     scheme = 'http'
-    port = 80
+    port = b"80"
     if ssl:
         scheme = 'https'
-        port = 443
+        port = b"443"
 
     try:
         index = raw.index(b'\n')
@@ -236,7 +238,7 @@ def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
         body = b'\n'.join(raws[index + 1:]).lstrip()
 
     # ? get url
-    url = f"{scheme}://{host.decode()}:{port}/{path.decode()}"
+    url = f"{scheme}://{host.decode()}:{port.decode()}/{path.decode()}"
     # ? get content-length
     if body and "Content-Length" not in headers and "Transfer-Encoding" not in headers:
         headers["Content-Length"] = str(len(body))
@@ -255,7 +257,7 @@ def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
         headers["Content-Type"] = "application/json"
     if headers["Content-Type"] == "application/x-www-form-urlencoded":
         body = dict([l.split(b"=")
-                     for l in body.strip().split(b";") if b"=" in l])
+                     for l in body.strip().split(b"&") if b"=" in l])
         body = {k.strip().decode(): v.strip().decode()
                 for k, v in body.items()}
     elif headers["Content-Type"] == "multipart/form-data":

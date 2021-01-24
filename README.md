@@ -1,7 +1,7 @@
 ## ctfbox 
 **A box for CTF challenges with some sugar functions, Just enjoy it**
 
-Current version: **1.1.1**
+Current version: **1.2.0**
 
 Please use python **3.6+**
 
@@ -99,7 +99,7 @@ Some functions that may be used in misc
 ***TODO***
 
 Some other functions
-- od_parse(data: str) -> Dict[str, Union[str, list]] // parse od command output without argument, return a dict with the following keys: hex, ascii, list, text
+- od_parse(data: str) -> Dict[str, Union[str, list]]
 
 
 ### core
@@ -155,7 +155,17 @@ Some functions Write by ourselves
    ### Make the range bigger!!
    print(hashAuth(answer="59e711d", endIndex=7, maxRange=2000000))
    ```
-
+- httpraw(raw: Union[bytes, str], **kwargs -> requests.Response):
+   ```
+   Send raw request by python-requests
+   
+   Allow kwargs:
+   - proxies(dict) : requests proxies
+   - timeout(float): requests timeout
+   - verify(bool)  : requests verify
+   - real_host(str): use real host instead of Host if set
+   - ssl(bool)     : whether https
+   ```
 
 ## Techniques
 - [pdm](https://github.com/frostming/pdm)
@@ -176,11 +186,14 @@ Other
    - [Morouu](http://github.com/Morouu)
 
 ## Logs
-### 1.2.0(TODO)
+### 1.2.0
 - add dev dependencies: icecream
 - add some functions:
     - od_parse
     - get_flask_pin
+    - httpraw
+    - p16 p32 p64 and uXX functions
+    - Base32 and Base64 table getter
 ### v1.1.1
 - move project to new directory
 - update Readme.md, added missing functions

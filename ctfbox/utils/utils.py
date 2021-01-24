@@ -1,17 +1,20 @@
-from base64 import b64decode, b64encode, urlsafe_b64decode, urlsafe_b64encode, b32encode
+import re
+from base64 import (b32encode, b64decode, b64encode, urlsafe_b64decode,
+                    urlsafe_b64encode)
 from binascii import hexlify, unhexlify
 from hashlib import md5 as _md5
 from hashlib import sha1 as _sha1
 from hashlib import sha256 as _sha256
+from itertools import chain
 from json import dumps, loads
 from random import choice, randint
 from string import ascii_lowercase, digits
-from urllib.parse import quote_plus, unquote_plus
 from struct import pack, unpack
-from typing import Union, Dict
-from itertools import chain
+from typing import Dict, Union
+from urllib.parse import quote_plus, unquote_plus
+
 import jwt
-import re
+import requests
 
 DEFAULT_ALPHABET = list(ascii_lowercase + digits)
 
@@ -336,7 +339,12 @@ def std_b64table() -> bytes:
 
 # ? other
 
+
 def od_parse(data: str) -> Dict[str, Union[str, list]]:
+    """Parse od command output without argument, return a dict with the following keys: hex, ascii, list, text
+    Returns:
+        dict: with key hex, ascii, list, text
+    """
     text, asc_data, hex_data, list_data = "", "", "", []
     for line in data.split("\n"):
         for d in line.split(" ")[1:]:

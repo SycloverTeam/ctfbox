@@ -167,7 +167,7 @@ def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
         ssl(bool)     : whether https
 
     Returns:
-        bytes: The packed bytes
+        requests.Response: the requests response
     """
     if isinstance(raw, str):
         raw = raw.encode()

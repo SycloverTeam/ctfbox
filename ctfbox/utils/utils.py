@@ -18,6 +18,9 @@ import requests
 
 DEFAULT_ALPHABET = list(ascii_lowercase + digits)
 
+def FlaskSessionHelperError(Exception):
+    pass
+
 
 def url_encode(s: str, encoding: str = 'utf-8') -> str:
     try:
@@ -185,11 +188,12 @@ def get_flask_pin(username: str, absRootPath: str, macAddress: str, machineId: s
 
 # flask_session_helper
 
-def check_import():
+def check_flask_import():
     try:
         from flask.sessions import SecureCookieSessionInterface
-    except ImportError:
-        return "Please install moudle Flask. e.g. python3 -m pip install flask"
+        return True
+    except ImportError as e:
+        return False
 
 
 class App:
@@ -197,7 +201,7 @@ class App:
         self.secret_key = secret_key
 
 
-def flask_session_encode(secret_key: str, payload: dict):
+def flask_session_encode(secret_key: str, payload: dict) -> str:
     """encode flask session
 
     Args:
@@ -208,21 +212,19 @@ def flask_session_encode(secret_key: str, payload: dict):
         str: session data
 
     """
+    if not check_flask_import():
+        raise ImportError("Please install moudle flask. e.g. python3 -m pip install flask")
+    from flask.sessions import SecureCookieSessionInterface
     try:
-        from flask.sessions import SecureCookieSessionInterface
-        try:
-            app = App(secret_key)
-            scsi = SecureCookieSessionInterface()
-            s = scsi.get_signing_serializer(app)
-
-            return s.dumps(payload)
-        except Exception as e:
-            return f"![Encoding Error] : {e}"
-    except ImportError:
-        return "Please install moudle Flask. e.g. python3 -m pip install flask"
+        app = App(secret_key)
+        scsi = SecureCookieSessionInterface()
+        s = scsi.get_signing_serializer(app)
+        return s.dumps(payload)
+    except Exception as e:
+        raise FlaskSessionHelperError("Encode error") from e
 
 
-def flask_session_decode(session_data: str, secret_key: str):
+def flask_session_decode(session_data: str, secret_key: str) -> dict:
     """decode flask session
 
     Args:
@@ -233,18 +235,16 @@ def flask_session_decode(session_data: str, secret_key: str):
         dict: session data information
 
     """
+    if not check_flask_import():
+        raise ImportError("Please install moudle flask. e.g. python3 -m pip install flask")
+    from flask.sessions import SecureCookieSessionInterface
     try:
-        from flask.sessions import SecureCookieSessionInterface
-        try:
-            app = App(secret_key)
-            scsi = SecureCookieSessionInterface()
-            s = scsi.get_signing_serializer(app)
-
-            return s.loads(session_data)
-        except Exception as e:
-            return f"![Decoding Error] : {e}"
-    except ImportError:
-        return "Please install moudle Flask. e.g. python3 -m pip install flask"
+        app = App(secret_key)
+        scsi = SecureCookieSessionInterface()
+        s = scsi.get_signing_serializer(app)
+        return s.loads(session_data)
+    except Exception as e:
+        raise FlaskSessionHelperError("Deocde error") from e
 
 
 # ? Reverse

@@ -82,6 +82,9 @@ Some functions with names similar to PHP, close to intuition
 - random_int(minN: int = 0, maxN: int = 1024) -> int
 - random_string(n: int = 32, alphabet: str = "") -> str
 
+Some functions that may be used in web
+- get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app", className: str = "Flask") -> str
+
 Some functions that may be used in reverse
 - printHex(data: Union[bytes, str], up: bool = True, sep: str = ' ')
 - p16(number: int, sign: str = 'unsigned', endianness: str = 'little') -> bytes
@@ -97,6 +100,7 @@ Some functions that may be used in misc
 
 Some other functions
 - od_parse(data: str) -> Dict[str, Union[str, list]] // parse od command output without argument, return a dict with the following keys: hex, ascii, list, text
+
 
 ### core
 Some functions Write by ourselves
@@ -173,8 +177,10 @@ Other
 
 ## Logs
 ### 1.2.0(TODO)
+- add dev dependencies: icecream
 - add some functions:
     - od_parse
+    - get_flask_pin
 ### v1.1.1
 - move project to new directory
 - update Readme.md, added missing functions

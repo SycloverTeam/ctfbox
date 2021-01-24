@@ -1,7 +1,7 @@
 ## ctfbox 
 **A box for CTF challenges with some sugar functions, Just enjoy it**
 
-Current version: **1.1.1**
+Current version: **1.2.0**
 
 Please use python **3.6+**
 
@@ -186,7 +186,7 @@ Other
    - [Morouu](http://github.com/Morouu)
 
 ## Logs
-### 1.2.0(TODO)
+### 1.2.0
 - add dev dependencies: icecream
 - add some functions:
     - od_parse

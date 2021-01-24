@@ -85,14 +85,19 @@ Some functions with names similar to PHP, close to intuition
 Some functions that may be used in web
 - get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app", appName: str = "Flask") -> str
 
-Some functions that may be used in reverse
-- printHex(data: Union[bytes, str], up: bool = True, sep: str = ' ')
-- p16(number: int, sign: str = 'unsigned', endianness: str = 'little') -> bytes
-- p32(number: int, endianess: str = 'little') -> bytes
-- p64(number: int, sign: str = 'unsigned', endianness: str = 'little') -> bytes
-- u16(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int
-- u32(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int
-- u64(data: bytes, sign: str = 'unsigned', endianness: str='little', ignore_size=True) -> int
+Some functions that may be used in reverse engineering
+print data in hex format
+`printHex()`
+
+pack number into bytes:
+`p16()`, `p32()`, `p64()`
+
+unpack number from bytes:
+`u16()`, `u32()`, `u64()`
+
+please refer to source code for functions signatures and usage
+
+
 
 Some functions that may be used in misc
 

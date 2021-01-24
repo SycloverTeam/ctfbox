@@ -11,6 +11,7 @@ from struct import pack, unpack
 from typing import Union, Dict
 from itertools import chain
 import jwt
+import re
 
 DEFAULT_ALPHABET = list(ascii_lowercase + digits)
 
@@ -216,14 +217,44 @@ def _pN(N: int, number: int, sign: str, endianness: str) -> bytes:
 
 
 def p16(number: int, sign: str = 'unsigned', endianness: str = 'little') -> bytes:
+    """Pack a 16-bit number
+
+    Args:
+        number (int): Number to convert
+        sign (str, optional): Signedness ("signed"/"unsigned"). Defaults to 'unsigned'.
+        endianness (str, optional): Endianness ("little"/"big"). Defaults to 'little'.
+
+    Returns:
+        bytes: The packed bytes
+    """
     return _pN(16, number, sign, endianness)
 
 
 def p32(number: int, sign: str = 'unsigned', endianness: str = 'little') -> bytes:
+    """Pack a 32-bit number
+
+    Args:
+        number (int): Number to convert
+        sign (str, optional): Signedness ("signed"/"unsigned"). Defaults to 'unsigned'.
+        endianness (str, optional): Endianness ("little"/"big"). Defaults to 'little'.
+
+    Returns:
+        bytes: The packed bytes
+    """
     return _pN(32, number, sign, endianness)
 
 
 def p64(number: int, sign: str = 'unsigned', endianness: str = 'little') -> bytes:
+    """Pack a 64-bit number
+
+    Args:
+        number (int): Number to convert
+        sign (str, optional): Signedness ("signed"/"unsigned"). Defaults to 'unsigned'.
+        endianness (str, optional): Endianness ("little"/"big"). Defaults to 'little'.
+
+    Returns:
+        bytes: The packed bytes
+    """
     return _pN(64, number, sign, endianness)
 
 
@@ -242,16 +273,57 @@ def _uN(N: int, data: bytes, sign: str, endianness: str, ignore_size: bool) -> i
 
 
 def u16(data: bytes, sign: str = 'unsigned', endianness: str = 'little', ignore_size=True) -> int:
+    """Unpacks an 16-bit integer
+
+    Args:
+        data (bytes): bytes data to convert
+        sign (str, optional): signedness ("signed"/"unsigned"). Defaults to 'unsigned'.
+        endianness (str, optional): endianness ("little"/"big"). Defaults to 'little'.
+        ignore_size (bool, optional): automatically pad data or truncate it to match the size . Defaults to True.
+
+    Returns:
+        int: The unpacked number
+    """
     return _uN(16, data, sign, endianness, ignore_size)
 
 
 def u32(data: bytes, sign: str = 'unsigned', endianness: str = 'little', ignore_size=True) -> int:
+    """Unpacks an 32-bit integer
+
+    Args:
+        data (bytes): bytes data to convert
+        sign (str, optional): signedness ("signed"/"unsigned"). Defaults to 'unsigned'.
+        endianness (str, optional): endianness ("little"/"big"). Defaults to 'little'.
+        ignore_size (bool, optional): automatically pad data or truncate it to match the size . Defaults to True.
+
+    Returns:
+        int: The unpacked number
+    """
     return _uN(32, data, sign, endianness, ignore_size)
 
 
 def u64(data: bytes, sign: str = 'unsigned', endianness: str = 'little', ignore_size=True) -> int:
+    """Unpacks an 64-bit integer
+
+    Args:
+        data (bytes): bytes data to convert
+        sign (str, optional): signedness ("signed"/"unsigned"). Defaults to 'unsigned'.
+        endianness (str, optional): endianness ("little"/"big"). Defaults to 'little'.
+        ignore_size (bool, optional): automatically pad data or truncate it to match the size . Defaults to True.
+
+    Returns:
+        int: The unpacked number
+    """
     return _uN(64, data, sign, endianness, ignore_size)
 
+
+def std_b64table() -> bytes:
+    """Get a standard Base64 table
+
+    Returns:
+        bytes: Base64 table in bytes format, use std_b64table().decode() to get a 'str' one
+    """
+    return b64encode(bytes(list(map(lambda x: int(x, 2), re.findall('.{8}', ''.join(map(lambda x: bin(x)[2:].zfill(6), list(range(64)))))))))
 
 # ? other
 

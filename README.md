@@ -155,7 +155,7 @@ Some functions Write by ourselves
    ### Make the range bigger!!
    print(hashAuth(answer="59e711d", endIndex=7, maxRange=2000000))
    ```
-- httpraw(raw: str, **kwargs -> requests.Response):
+- httpraw(raw: Union[bytes, str], **kwargs -> requests.Response):
    ```
    Send raw request by python-requests
    

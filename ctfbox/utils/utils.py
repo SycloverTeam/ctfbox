@@ -8,7 +8,7 @@ from random import choice, randint
 from string import ascii_lowercase, digits
 from urllib.parse import quote_plus, unquote_plus
 from struct import pack, unpack
-from typing import Union
+from typing import Union, Dict
 import jwt
 
 DEFAULT_ALPHABET = list(ascii_lowercase + digits)
@@ -209,3 +209,18 @@ def u32(data: bytes, sign: str = 'unsigned', endianness: str = 'little', ignore_
 
 def u64(data: bytes, sign: str = 'unsigned', endianness: str = 'little', ignore_size=True) -> int:
     return _uN(64, data, sign, endianness, ignore_size)
+
+
+# ? other
+
+def od_parse(data: str) -> Dict[str, Union[str, list]]:
+    text, asc_data, hex_data, list_data = "", "", "", []
+    for line in data.split("\n"):
+        for d in line.split(" ")[1:]:
+            h = hex(int(d, 8))[2:].zfill(4)
+            a, b = int(h[2:], 16), int(h[:2], 16)
+            text += chr(a)+chr(b)
+            hex_data += "0x%x 0x%x " % (a, b)
+            asc_data += "%s %s " % (a, b)
+            list_data += [a, b]
+    return {"hex": hex_data.strip(), "ascii": asc_data.strip(), "list": list_data, "text": text}

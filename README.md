@@ -188,7 +188,10 @@ Other
 ## Logs
 
 ### 1.2.1(TODO)
-- fix a bug that httpraw may not be able to send post request correctly
+httpraw:
+   - fix a bug that httpraw may not be able to send post request correctly
+   - fix a bug that could not solve port
+   - fix a bug that real_host could not use
 ### 1.2.0
 - add dev dependencies: icecream
 - add some functions:

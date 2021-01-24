@@ -85,6 +85,28 @@ Some functions with names similar to PHP, close to intuition
 Some functions that may be used in web
 - get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app", appName: str = "Flask") -> str
 
+- flask_session_helper(*Note: There is no flask dependency in ctfbox itself, the following two functions need to install the dependency by yourself*)
+  - flask_session_encode(secret_key: str, payload: dict)
+  - flask_session_decode(session_data: str, secret_key: str)
+  ```python
+  # Here is example
+  if __name__ == '__main__':
+  sc = '123'
+  pl = {
+  'user': 'admin',
+  'info': 'test'
+  }
+  ss = 'eyJpbmZvIjoidGVzdCIsInVzZXIiOiJhZG1pbiJ9.YA2WEA.phDDlkaEQOaXthwvpENxAeiHfiE'
+  print(flask_session_encode(sc, pl))
+  print(flask_session_decode(ss, '123'))
+  print(flask_session_decode(ss, '12345'))
+  
+  # Output
+  eyJpbmZvIjoidGVzdCIsInVzZXIiOiJhZG1pbiJ9.YA2XHw.PSPjYFyj3hxsTNx-d2vjncAMJW4
+  {'info': 'test', 'user': 'admin'}
+  ![Decoding Error] : Signature b'phDDlkaEQOaXthwvpENxAeiHfiE' does not match
+  ```
+
 Some functions that may be used in reverse engineering
 * print data in hex format: `printHex()`
 * pack number into bytes: `p16()`, `p32()`, `p64()`

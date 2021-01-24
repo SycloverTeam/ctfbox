@@ -187,7 +187,8 @@ Other
 
 ## Logs
 
-### 1.2.1(TODO)
+### 1.3.0(TODO)
+### 1.2.1
 httpraw:
    - fix a bug that httpraw may not be able to send post request correctly
    - fix a bug that could not solve port

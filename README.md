@@ -83,7 +83,7 @@ Some functions with names similar to PHP, close to intuition
 - random_string(n: int = 32, alphabet: str = "") -> str
 
 Some functions that may be used in web
-- get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app", className: str = "Flask") -> str
+- get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app", appName: str = "Flask") -> str
 
 Some functions that may be used in reverse
 - printHex(data: Union[bytes, str], up: bool = True, sep: str = ' ')

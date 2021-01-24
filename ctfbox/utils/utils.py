@@ -138,13 +138,13 @@ def jwt_decode(token: str) -> bytes:
 # ? web
 
 
-def get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app", className: str = "Flask") -> str:
+def get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app", appName: str = "Flask") -> str:
     rv, num = None, None
     probably_public_bits = [
         username,
         modName,
         # getattr(app, '__name__', getattr(app.__class__, '__name__'))
-        className,
+        appName,
         # getattr(mod, '__file__', None),
         absRootPath,
     ]

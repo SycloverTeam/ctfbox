@@ -266,6 +266,17 @@ def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange:
 
     Returns:
         str: the original value that its hash satisfies the answer
+
+    Example:
+        ### HashType optional value: HashType.MD5, HashType.SHA1, HashType.SHA256, HashType.SHA512
+        ### Crack the first five number MD5 type ctf verification codes
+        print(hashAuth(answer="02fcf"))
+        ### Crack the first five number SHA1 type ctf verification codes
+        print(hashAuth(answer="d13ce", hashType=HashType.SHA1))
+        #### Crack more quickly!!
+        print(hashAuth(answer="c907773", endIndex=7, threadNum=50))
+        ### Make the range bigger!!
+        print(hashAuth(answer="59e711d", endIndex=7, maxRange=2000000))
     """
     if hashType not in HASHTYPE_DICT:
         raise HashAuthArgumentError("HashType type error")

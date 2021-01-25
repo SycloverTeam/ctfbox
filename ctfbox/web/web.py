@@ -1,102 +1,43 @@
-from concurrent.futures import ThreadPoolExecutor
-from functools import partial, wraps
+from enum import Enum
+from functools import partial
 from http.server import HTTPServer
+from itertools import chain
 from json import loads
 from threading import Thread
-from typing import List, Tuple, Union
+from typing import Union, List, Tuple
 from urllib.parse import quote
+from hashlib import md5
 
 import requests
-
-from .internal.utils import *
-
-
-def Threader(number: int, timeout: int = None, retry: int = 2):
-    """
-    A simple decorator function that can decorate the function to make it multi-threaded.
-    """
-    def decorator(func):
-        if isinstance(number, int):
-            pool = ThreadPoolExecutor(number)
-        else:
-            raise TypeError(
-                "Invalid type: %s for number"
-                % type(number)
-            )
-
-        @wraps(func)
-        def wrapped(*args, **kwargs):
-            return Multier(
-                pool.submit(func, *args, **kwargs),
-                timeout,
-                retry,
-                pool,
-            )
-        return wrapped
-    return decorator
+from ctfbox.exceptions import (FlaskSessionHelperError, HashAuthArgumentError,
+                               ProvideArgumentError)
+from ctfbox.utils import Context, ProvideHandler, Threader
+from ctfbox.utils import md5 as _md5
+from ctfbox.utils import sha1, sha256, sha512
 
 
-def provide(host: str = "0.0.0.0", port: int = 2005, isasync: bool = False,  files: List[Tuple[Union[filepath, content], routePath, contentType]] = {}):
-    """
-    A simple and customizable http server.
-    """
-    if isinstance(files, list):
-        if not isinstance(files[0], (list, tuple)):
-            files = [files]
-    else:
-        raise ArugmentError("files type must be list")
-    handler = partial(ProvideHandler, files)
-    server = HTTPServer((host, port), handler)
-    print(f"Listen on {host}: {port} ...")
-    if isasync:
-        t = Thread(target=server.serve_forever)
-        t.start()
-    else:
-        try:
-            server.serve_forever()
-        except KeyboardInterrupt:
-            print('[#] KeyboardInterrupt')
-            server.shutdown()
+class HashType(Enum):
+    MD5 = 0
+    SHA1 = 1
+    SHA256 = 2
+    SHA512 = 3
 
 
-def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange: int = 1000000, threadNum: int = 25, hashType: HashType = HashType.MD5) -> str:
-    """
-    A function used to blast the first few bits of the hash, often used to crack the ctf verification code
-    """
-    if hashType not in HASHTYPE_DICT:
-        raise ArugmentError("HashType type error")
+filepath = str
+content = bytes
+routePath = str
+contentType = str
 
-    hash_len = endIndex - startIndex
-    if hash_len <= 0:
-        raise ArugmentError("startIndex/endIndex error")
+HASHTYPE_DICT = {HashType.MD5: _md5, HashType.SHA1: sha1,
+                 HashType.SHA256: sha256, HashType.SHA512: sha512}
 
-    if hash_len != len(answer):
-        if startIndex == 0:
-            endIndex = len(answer)
-        else:
-            raise ArugmentError("Hash length error")
-    i = iter(range(maxRange))
-    context = Context()
-    hashfunc = HASHTYPE_DICT[hashType]
-    @Threader(threadNum)
-    def run(context):
-        while context.value is None:
-            try:
-                guess = next(i)
-            except StopIteration:
-                break
-            if hashfunc(str(guess).encode()).hexdigest()[startIndex:endIndex] == answer:
-                context.value = True
-                return guess
-        return -1
-    tasks = [run(context) for _ in range(threadNum)]
 
-    for task in tasks:
-        if task.result == -1:
-            continue
-        pool = task.pool
-        pool.shutdown(wait=False)
-        return task.result
+def _check_flask_import():
+    try:
+        from flask.sessions import SecureCookieSessionInterface
+        return True
+    except ImportError:
+        return False
 
 
 def _is_json(data):
@@ -107,7 +48,7 @@ def _is_json(data):
     return True
 
 
-def _parse_form_data(body, encoding: str = "utf-8"):
+def _parse_form_data(body):
     if not body.startswith(b"-"):
         return {}, body
     parse_dict = {"data": {}, "files": {}}
@@ -155,8 +96,6 @@ def _parse_form_data(body, encoding: str = "utf-8"):
     return parse_dict
 
 
-<<<<<<< Updated upstream:ctfbox/core/core.py
-=======
 def get_flask_pin(username: str, absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app",
                   appName: str = "Flask") -> str:
     rv, num = None, None
@@ -375,7 +314,6 @@ def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange:
         return task.result
 
 
->>>>>>> Stashed changes:ctfbox/web/web.py
 def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
     """Send raw request by python-requests
 
@@ -506,6 +444,24 @@ def gopherraw(raw: str, host: str = "",  ssrfFlag: bool = True) -> str:
 
     Returns:
         str: gopher requests URL
+
+    Examples:
+        raw = '''POST /admin HTTP/1.1
+        Host: 127.0.0.1:5000
+        User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0
+        Content-Type: application/x-www-form-urlencoded
+        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+        Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2
+        Connection: close
+        Cookie: isAdmin=1
+        Upgrade-Insecure-Requests: 1
+        Content-Length: 3
+
+        a=b'''
+
+        print(gopherraw(raw, ssrfFlag=False))
+        # output is gopher://127.0.0.1:5000/_%0D%0APOST%20/admin%20HTTP/1.1%0D%0AHost%3A%20127.0.0.1%3A5000%0D%0AUser-Agent%3A%20Mozilla/5.0%20%28Windows%20NT%2010.0%3B%20Win64%3B%20x64%3B%20rv%3A84.0%29%20Gecko/20100101%20Firefox/84.0%0D%0AContent-Type%3A%20application/x-www-form-urlencoded%0D%0AAccept%3A%20text/html%2Capplication/xhtml%2Bxml%2Capplication/xml%3Bq%3D0.9%2Cimage/webp%2C%2A/%2A%3Bq%3D0.8%0D%0AAccept-Language%3A%20zh-CN%2Czh%3Bq%3D0.8%2Czh-TW%3Bq%3D0.7%2Czh-HK%3Bq%3D0.5%2Cen-US%3Bq%3D0.3%2Cen%3Bq%3D0.2%0D%0AConnection%3A%20close%0D%0ACookie%3A%20isAdmin%3D1%0D%0AUpgrade-Insecure-Requests%3A%201%0D%0AContent-Length%3A%203%0D%0A%0D%0Aa%3Db
+        # curl this url directly
     """
     data = ""
     for row in raw.split("\n"):

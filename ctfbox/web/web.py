@@ -109,6 +109,19 @@ def _generateTrush(diff_len: int, remain: int):
 
 def get_flask_pin(username: str, absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app",
                   appName: str = "Flask") -> str:
+    """get flask debug pin code.
+
+    Args:
+        username (str): username of flask
+        absRootPath (str): project abs root path,from getattr(mod, '__file__', None)
+        macAddress (str): mac address,from /sys/class/net/<eth0>/address
+        machineId (str): machine id,from /etc/machine-id
+        modName (str, optional): mod name.  Defaults to "flask.app".
+        appName (str, optional): app name, from getattr(app, '__name__', getattr(app.__class__, '__name__')). Defaults to "Flask".
+
+    Returns:
+        str: flask debug pin code
+    """
     rv, num = None, None
     probably_public_bits = [
         username,

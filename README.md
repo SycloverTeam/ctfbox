@@ -40,10 +40,16 @@ from ctfbox import * # Will not import the pwn part, please check the PWN Usage 
 ## Functions
 ### utils
 Some functions with names similar to PHP, close to intuition
+- url_encode(s: str, encoding: str = 'utf-8') -> str
+- url_decode(s: str, encoding: str = 'utf-8') -> str
 - base64_decode(s: str, encoding='utf-8') -> str
 - base64_encode(s: str, encoding='utf-8') -> str
 - bin2hex(s: str) -> str
 - hex2bin(s: str) -> str
+- json_encode(obj) -> object
+- json_decode(data) -> str
+- jwt_decode(token: str) -> bytes
+- jwt_encode(header: dict, payload: dict, key=None, algorithm=None) -> str
 - sha1(s: str, encoding='utf-8') -> str
 - sha256(s: str, encoding='utf-8') -> str
 - md5(s: str, encoding='utf-8') -> str
@@ -54,81 +60,21 @@ Some functions with names similar to PHP, close to intuition
    ```
     A simple decorator function that can decorate the function to make it multi-threaded.
    ```
-   Here is a example.
-   ```Python
-   from ctfbox import Threader, random_string, random_int
-   from time import sleep
-
-   @Threader(10)
-   def exp(i: int):
-       sleep(random_int(1, 5))
-       return "%d : %s" % (i, random_string())
-    
-    tasks = [exp(i) for i in range(100)] # 100 tasks
-    for task in tasks: 
-        # task.result return when a task completed
-        # task is a concurrent.futures.Future with some sugar attributes
-        print('result: %s running: %s done: %s exception: %s' % (task.result, task.running, task.done, task.exception))
-   ```
+  
 
 ### WEB
-- url_encode(s: str, encoding: str = 'utf-8') -> str
-- url_decode(s: str, encoding: str = 'utf-8') -> str
-- json_encode(obj) -> object
-- json_decode(data) -> str
-- jwt_decode(token: str) -> bytes
-- jwt_encode(header: dict, payload: dict, key=None, algorithm=None) -> str
 - get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app", appName: str = "Flask") -> str
-- flask_session_helper(*Note: There is no flask dependency in ctfbox itself, the following two functions need to install the dependency by yourself*)
+- flask_session_helper
+(***⚠️ There is no flask dependency in ctfbox itself, the following two functions need to install the dependency by yourself***)
   - flask_session_encode(secret_key: str, payload: dict) -> str
   - flask_session_decode(session_data: str, secret_key: str) -> dict
-  ```python
-  # Here is example
-  sc = '123'
-  pl = {
-  'user': 'admin',
-  'info': 'test'
-  }
-  ss = 'eyJpbmZvIjoidGVzdCIsInVzZXIiOiJhZG1pbiJ9.YA2WEA.phDDlkaEQOaXthwvpENxAeiHfiE'
-  print(flask_session_encode(sc, pl))
-  print(flask_session_decode(ss, '123'))
-  print(flask_session_decode(ss, '12345'))
-  
-  # Output
-  eyJpbmZvIjoidGVzdCIsInVzZXIiOiJhZG1pbiJ9.YA2XHw.PSPjYFyj3hxsTNx-d2vjncAMJW4
-  {'info': 'test', 'user': 'admin'}
-  # raise a FlaskSessionHelperError
-  ```
 - provide(host: str = "0.0.0.0", port: int = 2005, isasync: bool = False, files: List[Tuple[Union[filepath, content], routePath, contentType]] = {})
    ```
    A simple and customizable http server.
    ```
-   Here are some examples.
-   ```python
-   # provide a exist file named index.html
-   provide(files=[('index.html',)])
-   # Here is a trick if you provide only one file
-   provide(files=['index.html'])
-   # route /index.html provide content Hello world\n
-   provide(files=[(b"Hello world\\n", "/index.html")])
-   # provide some files
-   provide(files=[("test.txt", ), ("index.html", )])
-   ```
 - hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange: int = 1000000, threadNum: int = 25, hashType: HashType = HashType.MD5) -> str
    ```
    A function used to blast the first few bits of the hash, often used to crack the ctf verification code
-   ```
-   Here are some examples.
-   ```python
-   ### HashType optional value: HashType.MD5, HashType.SHA1, HashType.SHA256, HashType.SHA512
-   ### Crack the first five number MD5 type ctf verification codes
-   print(hashAuth(answer="02fcf"))
-   ### Crack the first five number SHA1 type ctf verification codes
-   print(hashAuth(answer="d13ce", hashType=HashType.SHA1))
-   #### Crack more quickly!!
-   print(hashAuth(answer="c907773", endIndex=7, threadNum=50))
-   ### Make the range bigger!!
-   print(hashAuth(answer="59e711d", endIndex=7, maxRange=2000000))
    ```
 - httpraw(raw: Union[bytes, str], **kwargs -> requests.Response)
    ```
@@ -144,25 +90,6 @@ Some functions with names similar to PHP, close to intuition
 - gopherraw(raw: str, host: str = "",  ssrfFlag: bool = False) -> str
    ```
    Generate gopher requests URL form a raw http request
-   ```
-   Here is an example.
-   ```python
-   raw = """POST /admin HTTP/1.1
-   Host: 127.0.0.1:5000
-   User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0
-   Content-Type: application/x-www-form-urlencoded
-   Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
-   Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2
-   Connection: close
-   Cookie: isAdmin=1
-   Upgrade-Insecure-Requests: 1
-   Content-Length: 3
-
-   a=b"""
-
-   print(gopherraw(raw, ssrfFlag=False))
-   # output is gopher://127.0.0.1:5000/_%0D%0APOST%20/admin%20HTTP/1.1%0D%0AHost%3A%20127.0.0.1%3A5000%0D%0AUser-Agent%3A%20Mozilla/5.0%20%28Windows%20NT%2010.0%3B%20Win64%3B%20x64%3B%20rv%3A84.0%29%20Gecko/20100101%20Firefox/84.0%0D%0AContent-Type%3A%20application/x-www-form-urlencoded%0D%0AAccept%3A%20text/html%2Capplication/xhtml%2Bxml%2Capplication/xml%3Bq%3D0.9%2Cimage/webp%2C%2A/%2A%3Bq%3D0.8%0D%0AAccept-Language%3A%20zh-CN%2Czh%3Bq%3D0.8%2Czh-TW%3Bq%3D0.7%2Czh-HK%3Bq%3D0.5%2Cen-US%3Bq%3D0.3%2Cen%3Bq%3D0.2%0D%0AConnection%3A%20close%0D%0ACookie%3A%20isAdmin%3D1%0D%0AUpgrade-Insecure-Requests%3A%201%0D%0AContent-Length%3A%203%0D%0A%0D%0Aa%3Db
-   # curl this url directly
    ```
 
 ### REVERSE

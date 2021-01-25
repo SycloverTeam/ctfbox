@@ -90,7 +90,6 @@ Some functions that may be used in web
   - flask_session_decode(session_data: str, secret_key: str) -> dict
   ```python
   # Here is example
-  if __name__ == '__main__':
   sc = '123'
   pl = {
   'user': 'admin',
@@ -104,7 +103,7 @@ Some functions that may be used in web
   # Output
   eyJpbmZvIjoidGVzdCIsInVzZXIiOiJhZG1pbiJ9.YA2XHw.PSPjYFyj3hxsTNx-d2vjncAMJW4
   {'info': 'test', 'user': 'admin'}
-  ![Decoding Error] : Signature b'phDDlkaEQOaXthwvpENxAeiHfiE' does not match
+  # raise a FlaskSessionHelperError
   ```
 
 Some functions that may be used in reverse engineering

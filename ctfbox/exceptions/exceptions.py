@@ -1,15 +1,19 @@
 
-def CtfboxError(Exception):
+class CtfboxError(Exception):
     pass
 
 
-def FlaskSessionHelperError(CtfboxError):
+class FlaskSessionHelperError(CtfboxError):
     pass
 
 
-def ProvideArgumentError(CtfboxError):
+class ProvideArgumentError(CtfboxError):
     pass
 
 
-def HashAuthArgumentError(CtfboxError):
+class HashAuthArgumentError(CtfboxError):
+    pass
+
+
+class GeneratePayloadError(CtfboxError):
     pass

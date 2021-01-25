@@ -85,7 +85,7 @@ Some functions with names similar to PHP, close to intuition
 Some functions that may be used in web
 - get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app", appName: str = "Flask") -> str
 
-- flask_session_helper(*Note: There is no flask dependency in ctfbox itself, the following two functions need to install the dependency by yourself*)
+- flask_session_helper(⚠Note: **There is no flask dependency in ctfbox itself, the following two functions need to install the dependency by yourself**)
   - flask_session_encode(secret_key: str, payload: dict) -> str
   - flask_session_decode(session_data: str, secret_key: str) -> dict
   ```python

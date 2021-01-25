@@ -155,6 +155,227 @@ def _parse_form_data(body, encoding: str = "utf-8"):
     return parse_dict
 
 
+<<<<<<< Updated upstream:ctfbox/core/core.py
+=======
+def get_flask_pin(username: str, absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app",
+                  appName: str = "Flask") -> str:
+    rv, num = None, None
+    probably_public_bits = [
+        username,
+        modName,
+        # getattr(app, '__name__', getattr(app.__class__, '__name__'))
+        appName,
+        # getattr(mod, '__file__', None),
+        absRootPath,
+    ]
+
+    private_bits = [
+        # str(uuid.getnode()),  /sys/class/net/ens33/address
+        str(int(macAddress.strip().replace(":", ""), 16)),
+        machineId,  # get_machine_id(), /etc/machine-id
+    ]
+
+    h = md5()
+    for bit in chain(probably_public_bits, private_bits):
+        if not bit:
+            continue
+        if isinstance(bit, str):
+            bit = bit.encode('utf-8')
+        h.update(bit)
+    h.update(b'cookiesalt')
+
+    h.update(b'pinsalt')
+    num = ('%09d' % int(h.hexdigest(), 16))[:9]
+
+    for group_size in 5, 4, 3:
+        if len(num) % group_size == 0:
+            rv = '-'.join(num[x:x + group_size].rjust(group_size, '0')
+                          for x in range(0, len(num), group_size))
+            break
+    else:
+        rv = num
+    return rv
+
+
+class App:
+    def __init__(self, secret_key: str):
+        self.secret_key = secret_key
+
+
+def flask_session_encode(secret_key: str, payload: dict) -> str:
+    """encode flask session
+
+    Args:
+        secret_key: secret_key
+        payload: The data you want to encode
+
+    Returns:
+        str: session data
+
+    Example:
+        sc = '123'
+        pl = {
+        'user': 'admin',
+        'info': 'test'
+        }
+
+        print(flask_session_encode(sc, pl))
+
+        # Output
+        eyJpbmZvIjoidGVzdCIsInVzZXIiOiJhZG1pbiJ9.YA2XHw.PSPjYFyj3hxsTNx-d2vjncAMJW4
+    """
+    if not _check_flask_import():
+        raise ImportError(
+            "Please install moudle flask. e.g. python3 -m pip install flask")
+    from flask.sessions import SecureCookieSessionInterface
+    try:
+        app = App(secret_key)
+        scsi = SecureCookieSessionInterface()
+        s = scsi.get_signing_serializer(app)
+        return s.dumps(payload)
+    except Exception as e:
+        raise FlaskSessionHelperError("Encode error") from e
+
+
+def flask_session_decode(session_data: str, secret_key: str) -> dict:
+    """decode flask session
+
+    Args:
+        session_data: The session you want to decode
+        secret_key: secret_key
+
+    Returns:
+        dict: session data information
+
+    Example:
+        ss = 'eyJpbmZvIjoidGVzdCIsInVzZXIiOiJhZG1pbiJ9.YA2WEA.phDDlkaEQOaXthwvpENxAeiHfiE'
+        print(flask_session_decode(ss, '123'))
+        print(flask_session_decode(ss, '12345'))
+
+        # Output
+        {'info': 'test', 'user': 'admin'}
+        # raise a FlaskSessionHelperError
+    """
+    if not _check_flask_import():
+        raise ImportError(
+            "Please install moudle flask. e.g. python3 -m pip install flask")
+    from flask.sessions import SecureCookieSessionInterface
+    try:
+        app = App(secret_key)
+        scsi = SecureCookieSessionInterface()
+        s = scsi.get_signing_serializer(app)
+        return s.loads(session_data)
+    except Exception as e:
+        raise FlaskSessionHelperError("Deocde error") from e
+
+
+def provide(host: str = "0.0.0.0", port: int = 2005, isasync: bool = False,  files: List[Tuple[Union[filepath, content], routePath, contentType]] = {}):
+    """A simple and customizable http server.
+
+    Args:
+        host (str, optional): listen host. Defaults to "0.0.0.0".
+        port (int, optional): listen port Defaults to 2005.
+        isasync (bool, optional): Whether is async. Defaults to False.
+        files (List[Tuple[Union[filepath, content], routePath, contentType]], optional): provide files. Defaults to {}.
+
+    Raises:
+        ProvideArgumentError
+
+    Example:
+        # provide a exist file named index.html
+        provide(files=[('index.html',)])
+        # Here is a trick if you provide only one file
+        provide(files=['index.html'])
+        # route /index.html provide content Hello world\n
+        provide(files=[(b"Hello world\\n", "/index.html")])
+        # provide some files
+        provide(files=[("test.txt", ), ("index.html", )])
+    """
+
+    if isinstance(files, list):
+        if not isinstance(files[0], (list, tuple)):
+            files = [files]
+    else:
+        raise ProvideArgumentError("files type must be list")
+    handler = partial(ProvideHandler, files)
+    server = HTTPServer((host, port), handler)
+    print(f"Listen on {host}: {port} ...")
+    if isasync:
+        t = Thread(target=server.serve_forever)
+        t.start()
+    else:
+        try:
+            server.serve_forever()
+        except KeyboardInterrupt:
+            print('[#] KeyboardInterrupt')
+            server.shutdown()
+
+
+def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange: int = 1000000, threadNum: int = 25, hashType: HashType = HashType.MD5) -> str:
+    """A function used to blast the first few bits of the hash, often used to crack the ctf verification code.
+
+    Args:
+        startIndex (int, optional): argument answer start index. Defaults to 0.
+        endIndex (int, optional): argument answer end index. Defaults to 5.
+        answer (str, optional): Part of the result hash. Defaults to "".
+        maxRange (int, optional): burte force number max range. Defaults to 1000000.
+        threadNum (int, optional): thread number. Defaults to 25.
+        hashType (HashType, optional): burte force hash type. Defaults to HashType.MD5.
+
+    Raises:
+        HashAuthArgumentError
+
+    Returns:
+        str: the original value that its hash satisfies the answer
+
+    Example:
+        ### HashType optional value: HashType.MD5, HashType.SHA1, HashType.SHA256, HashType.SHA512
+        ### Crack the first five number MD5 type ctf verification codes
+        print(hashAuth(answer="02fcf"))
+        ### Crack the first five number SHA1 type ctf verification codes
+        print(hashAuth(answer="d13ce", hashType=HashType.SHA1))
+        #### Crack more quickly!!
+        print(hashAuth(answer="c907773", endIndex=7, threadNum=50))
+        ### Make the range bigger!!
+        print(hashAuth(answer="59e711d", endIndex=7, maxRange=2000000))
+    """
+    if hashType not in HASHTYPE_DICT:
+        raise HashAuthArgumentError("HashType type error")
+
+    hash_len = endIndex - startIndex
+    if hash_len <= 0:
+        raise HashAuthArgumentError("startIndex/endIndex error")
+
+    if hash_len != len(answer):
+        if startIndex == 0:
+            endIndex = len(answer)
+        else:
+            raise HashAuthArgumentError("Hash length error")
+    i = iter(range(maxRange))
+    context = Context()
+    hashfunc = HASHTYPE_DICT[hashType]
+    @Threader(threadNum)
+    def run(context):
+        while context.value is None:
+            try:
+                guess = next(i)
+            except StopIteration:
+                break
+            if hashfunc(str(guess).encode()).hexdigest()[startIndex:endIndex] == answer:
+                context.value = True
+                return guess
+        return -1
+    tasks = [run(context) for _ in range(threadNum)]
+
+    for task in tasks:
+        if task.result == -1:
+            continue
+        pool = task.pool
+        pool.shutdown(wait=False)
+        return task.result
+
+
+>>>>>>> Stashed changes:ctfbox/web/web.py
 def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
     """Send raw request by python-requests
 

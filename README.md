@@ -1,7 +1,7 @@
 ## ctfbox 
 **A box for CTF challenges with some sugar functions, Just enjoy it**
 
-Current version: **1.1.1**
+Current version: **1.2.1**
 
 Please use python **3.6+**
 
@@ -85,6 +85,27 @@ Some functions with names similar to PHP, close to intuition
 Some functions that may be used in web
 - get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app", appName: str = "Flask") -> str
 
+- flask_session_helper(*Note: There is no flask dependency in ctfbox itself, the following two functions need to install the dependency by yourself*)
+  - flask_session_encode(secret_key: str, payload: dict) -> str
+  - flask_session_decode(session_data: str, secret_key: str) -> dict
+  ```python
+  # Here is example
+  sc = '123'
+  pl = {
+  'user': 'admin',
+  'info': 'test'
+  }
+  ss = 'eyJpbmZvIjoidGVzdCIsInVzZXIiOiJhZG1pbiJ9.YA2WEA.phDDlkaEQOaXthwvpENxAeiHfiE'
+  print(flask_session_encode(sc, pl))
+  print(flask_session_decode(ss, '123'))
+  print(flask_session_decode(ss, '12345'))
+  
+  # Output
+  eyJpbmZvIjoidGVzdCIsInVzZXIiOiJhZG1pbiJ9.YA2XHw.PSPjYFyj3hxsTNx-d2vjncAMJW4
+  {'info': 'test', 'user': 'admin'}
+  # raise a FlaskSessionHelperError
+  ```
+
 Some functions that may be used in reverse engineering
 * print data in hex format: `printHex()`
 * pack number into bytes: `p16()`, `p32()`, `p64()`
@@ -155,7 +176,7 @@ Some functions Write by ourselves
    ### Make the range bigger!!
    print(hashAuth(answer="59e711d", endIndex=7, maxRange=2000000))
    ```
-- httpraw(raw: str, **kwargs -> requests.Response):
+- httpraw(raw: Union[bytes, str], **kwargs -> requests.Response):
    ```
    Send raw request by python-requests
    
@@ -186,7 +207,15 @@ Other
    - [Morouu](http://github.com/Morouu)
 
 ## Logs
-### 1.2.0(TODO)
+
+### 1.3.0(TODO)
+### 1.2.1
+httpraw:
+   - fix a bug that httpraw may not be able to send post request correctly
+   - fix a bug that could not solve port
+   - fix a bug that real_host could not use
+   - fix a bug that may cause encoding error
+### 1.2.0
 - add dev dependencies: icecream
 - add some functions:
     - od_parse

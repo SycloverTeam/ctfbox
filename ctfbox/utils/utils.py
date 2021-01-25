@@ -18,6 +18,9 @@ import requests
 
 DEFAULT_ALPHABET = list(ascii_lowercase + digits)
 
+def FlaskSessionHelperError(Exception):
+    pass
+
 
 def url_encode(s: str, encoding: str = 'utf-8') -> str:
     try:
@@ -139,10 +142,12 @@ def jwt_decode(token: str) -> bytes:
 
     return b'-'.join(data)
 
+
 # ? web
 
 
-def get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app", appName: str = "Flask") -> str:
+def get_flask_pin(username: str, absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app",
+                  appName: str = "Flask") -> str:
     rv, num = None, None
     probably_public_bits = [
         username,
@@ -181,173 +186,65 @@ def get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: 
     return rv
 
 
-def _is_json(data):
+# flask_session_helper
+
+def check_flask_import():
     try:
-        loads(data)
-    except ValueError:
+        from flask.sessions import SecureCookieSessionInterface
+        return True
+    except ImportError as e:
         return False
-    return True
 
 
-def _parse_form_data(body, encoding: str = "utf-8"):
-    if not body.startswith("-"):
-        return {}, body
-    parse_dict = {"data": {}, "files": {}}
-    lines = body.split("\n")
-    start, end = 0, 0
-    while start < len(lines):
-        boundary = lines[start]
-        if boundary == "":
-            start += 1
-            continue
-        end = start + lines[start:].index(boundary + "--")
-        file_lines = lines[start:end]
-        split_index = file_lines.index('')
-        file_headers = file_lines[1:split_index]
-        file_bodys = file_lines[split_index+1:end]
-        header = file_headers[0]
-        content_type = ""
-
-        # ? header
-        if not header.lower().startswith("content-disposition: "):
-            start = end + 1
-            continue
-        other_headers = header[header.index(";"):]
-        _dict = dict([l.split("=")
-                      for l in other_headers.strip().split(";") if "=" in l])
-        _dict = {k.strip(): v.strip('"') for k, v in _dict.items()}
-        field = _dict.get('name', "")
-        filename = _dict.get('filename', "")
-
-        # ? content_type
-        if len(file_headers) > 1:
-            content_type_header = file_headers[1]
-            if content_type_header.lower().startswith("content-type:"):
-                content_type = content_type_header.split(":")[1].strip()
-            else:
-                content_type = "text/plain"
-
-        body_string = '\n'.join(file_bodys)
-        body_content = body_string.encode(encoding=encoding)
-        if filename == "":
-            parse_dict["data"][field] = body_string
-        else:
-            parse_dict["files"][field] = (filename, body_content, content_type)
-        start = end + 1
-    return parse_dict
+class App:
+    def __init__(self, secret_key: str):
+        self.secret_key = secret_key
 
 
-def httpraw(raw: str, **kwargs) -> requests.Response:
-    """Send raw request by python-requests
+def flask_session_encode(secret_key: str, payload: dict) -> str:
+    """encode flask session
 
     Args:
-        raw (str): raw data
-        **kwargs:
-            - proxies(dict) : requests proxies
-            - timeout(float): requests timeout
-            - verify(bool)  : requests verify
-            - real_host(str): use real host instead of Host if set
-            - ssl(bool)     : whether https
+        secret_key: secret_key
+        payload: The data you want to encode
+
     Returns:
-        requests.Response: The request response
+        str: session data
+
     """
-    # ? Origin: https://github.com/boy-hack/hack-requests
-    raw = raw.strip()
-    proxies = kwargs.get("proxy", None)
-    timeout = kwargs.get("timeout", 60.0)
-    verify = kwargs.get("verify", True)
-    real_host = kwargs.get("real_host", None)
-    ssl = kwargs.get("ssl", False)
-
-    # ? Judgment scheme
-    scheme = 'http'
-    port = 80
-    if ssl:
-        scheme = 'https'
-        port = 443
-
+    if not check_flask_import():
+        raise ImportError("Please install moudle flask. e.g. python3 -m pip install flask")
+    from flask.sessions import SecureCookieSessionInterface
     try:
-        index = raw.index('\n')
-    except ValueError:
-        raise Exception("ValueError")
-    # ? get method, path and protocol
+        app = App(secret_key)
+        scsi = SecureCookieSessionInterface()
+        s = scsi.get_signing_serializer(app)
+        return s.dumps(payload)
+    except Exception as e:
+        raise FlaskSessionHelperError("Encode error") from e
+
+
+def flask_session_decode(session_data: str, secret_key: str) -> dict:
+    """decode flask session
+
+    Args:
+        session_data: The session you want to decode
+        secret_key: secret_key
+
+    Returns:
+        dict: session data information
+
+    """
+    if not check_flask_import():
+        raise ImportError("Please install moudle flask. e.g. python3 -m pip install flask")
+    from flask.sessions import SecureCookieSessionInterface
     try:
-        method, path, protocol = raw[:index].split(" ")
-    except Exception:
-        raise Exception("Protocol format error")
-    raw = raw[index + 1:]
-
-    # ? get host
-    try:
-        host_start = raw.index("Host: ")
-        host_end = raw.index('\n', host_start)
-
-    except ValueError:
-        raise ValueError("Host headers not found")
-
-    if real_host:
-        host = real_host
-        if ":" in real_host:
-            host, port = real_host.split(":")
-    else:
-        host = raw[host_start + len("Host: "):host_end]
-        if ":" in host:
-            host, port = host.split(":")
-    raws = raw.splitlines()
-    headers = {}
-    index = 0
-    # ? get headers
-    for r in raws:
-        if r == "":
-            break
-        try:
-            k, v = r.split(": ")
-        except Exception:
-            k = r
-            v = ""
-        headers[k] = v
-        index += 1
-    headers["Connection"] = "close"
-    # ? get body
-    if len(raws) < index + 1:
-        body = ''
-    else:
-        body = '\n'.join(raws[index + 1:]).lstrip()
-
-    # ? get url
-    url = f"{scheme}://{host}:{port}/{path}"
-    # ? get content-length
-    if body and "Content-Length" not in headers and "Transfer-Encoding" not in headers:
-        headers["Content-Length"] = str(len(body))
-    # ? deal with chunked
-    if body and headers.get("Transfer-Encoding", '').lower() == "chunked":
-        body = body.replace('\r\n', '\n')
-        body = body.replace('\n', '\r\n')
-        body = body + "\r\n" * 2
-    # ? deal with Content-Type
-
-    # ? deal with body
-    parse_dict = {"files": {}, "data": {}}
-    if "Content-Type" not in headers:
-        headers["Content-Type"] = "application/x-www-form-urlencoded"
-    elif _is_json(body) and headers["Content-Type"] not in ["application/json", "multipart/form-data"]:
-        headers["Content-Type"] = "application/json"
-    if headers["Content-Type"] == "application/x-www-form-urlencoded":
-        body = dict([l.split("=")
-                     for l in body.strip().split(";") if "=" in l])
-    elif headers["Content-Type"] == "multipart/form-data":
-        parse_dict = _parse_form_data(body)
-        body = parse_dict["data"]
-
-    # ? prepare request
-    s = requests.Session()
-    req = requests.Request(method, url, data=body, files=parse_dict["files"])
-    prepped = req.prepare()
-    return s.send(prepped,
-                  proxies=proxies,
-                  timeout=timeout,
-                  verify=verify,
-                  )
+        app = App(secret_key)
+        scsi = SecureCookieSessionInterface()
+        s = scsi.get_signing_serializer(app)
+        return s.loads(session_data)
+    except Exception as e:
+        raise FlaskSessionHelperError("Deocde error") from e
 
 
 # ? Reverse
@@ -358,7 +255,7 @@ def printHex(data: Union[bytes, str], up: bool = True, sep: str = ' '):
     bs = list(data)
     for i in range(len(bs)):
         print(('%02X' if up else '%02x') % bs[i], end=sep)
-        if (i+1) % 16 == 0:
+        if (i + 1) % 16 == 0:
             print()
 
 
@@ -495,7 +392,8 @@ def std_b32table() -> bytes:
     Returns:
         bytes: Base32 table in bytes format, use std_b64table().decode() to get a 'str' one
     """
-    return b32encode(bytes(list(map(lambda x: int(x, 2), re.findall('.{8}', ''.join(map(lambda x: bin(x)[2:].zfill(5), list(range(32)))))))))
+    return b32encode(bytes(list(
+        map(lambda x: int(x, 2), re.findall('.{8}', ''.join(map(lambda x: bin(x)[2:].zfill(5), list(range(32)))))))))
 
 
 def std_b64table() -> bytes:
@@ -504,7 +402,9 @@ def std_b64table() -> bytes:
     Returns:
         bytes: Base64 table in bytes format, use std_b64table().decode() to get a 'str' one
     """
-    return b64encode(bytes(list(map(lambda x: int(x, 2), re.findall('.{8}', ''.join(map(lambda x: bin(x)[2:].zfill(6), list(range(64)))))))))
+    return b64encode(bytes(list(
+        map(lambda x: int(x, 2), re.findall('.{8}', ''.join(map(lambda x: bin(x)[2:].zfill(6), list(range(64)))))))))
+
 
 # ? other
 
@@ -519,7 +419,7 @@ def od_parse(data: str) -> Dict[str, Union[str, list]]:
         for d in line.split(" ")[1:]:
             h = hex(int(d, 8))[2:].zfill(4)
             a, b = int(h[2:], 16), int(h[:2], 16)
-            text += chr(a)+chr(b)
+            text += chr(a) + chr(b)
             hex_data += "0x%x 0x%x " % (a, b)
             asc_data += "%s %s " % (a, b)
             list_data += [a, b]

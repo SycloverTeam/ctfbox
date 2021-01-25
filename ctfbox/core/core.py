@@ -106,55 +106,71 @@ def _is_json(data):
     return True
 
 
-def parse_form_data(body, encoding: str = "utf-8"):
-    if not body.startswith("-"):
+def _parse_form_data(body, encoding: str = "utf-8"):
+    if not body.startswith(b"-"):
         return {}, body
     parse_dict = {"data": {}, "files": {}}
-    lines = body.split("\n")
+    lines = body.split(b"\n")
     start, end = 0, 0
     while start < len(lines):
         boundary = lines[start]
-        if boundary == "":
+        if boundary == b"":
             start += 1
             continue
-        end = start + lines[start:].index(boundary + "--")
+        end = start + lines[start:].index(boundary + b"--")
         file_lines = lines[start:end]
-        split_index = file_lines.index('')
+        split_index = file_lines.index(b'')
         file_headers = file_lines[1:split_index]
         file_bodys = file_lines[split_index+1:end]
         header = file_headers[0]
         content_type = ""
 
         # ? header
-        if not header.lower().startswith("content-disposition: "):
+        if not header.lower().startswith(b"content-disposition: "):
             start = end + 1
             continue
-        other_headers = header[header.index(";"):]
-        _dict = dict([l.split("=")
-                      for l in other_headers.strip().split(";") if "=" in l])
-        _dict = {k.strip(): v.strip('"') for k, v in _dict.items()}
-        field = _dict.get('name', "")
-        filename = _dict.get('filename', "")
+        other_headers = header[header.index(b";"):]
+        _dict = dict([l.split(b"=")
+                      for l in other_headers.strip().split(b";") if b"=" in l])
+        _dict = {k.strip(): v.strip(b'"') for k, v in _dict.items()}
+        field = _dict.get(b'name', b"")
+        filename = _dict.get(b'filename', b"")
 
         # ? content_type
         if len(file_headers) > 1:
             content_type_header = file_headers[1]
-            if content_type_header.lower().startswith("content-type:"):
-                content_type = content_type_header.split(":")[1].strip()
+            if content_type_header.lower().startswith(b"content-type:"):
+                content_type = content_type_header.split(b":")[1].strip()
             else:
                 content_type = "text/plain"
 
-        body_string = '\n'.join(file_bodys)
-        body_content = body_string.encode(encoding=encoding)
-        if filename == "":
-            parse_dict["data"][field] = body_string
+        body_content = b'\n'.join(file_bodys)
+        if filename == b"":
+            parse_dict["data"][field] = body_content
         else:
-            parse_dict["files"][field] = (filename, body_content, content_type)
+            parse_dict["files"][field] = (
+                filename.decode(), body_content, content_type.decode())
         start = end + 1
     return parse_dict
 
 
-def httpraw(raw: str, **kwargs) -> requests.Response:
+def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
+    """Send raw request by python-requests
+
+   Args:
+    raw(bytes/str): raw http request
+    kwargs:
+        proxies(dict) : requests proxies
+        timeout(float): requests timeout
+        verify(bool)  : requests verify
+        real_host(str): use real host instead of Host if set
+        ssl(bool)     : whether https
+
+    Returns:
+        requests.Response: the requests response
+    """
+    if isinstance(raw, str):
+        raw = raw.encode()
     # ? Origin: https://github.com/boy-hack/hack-requests
     raw = raw.strip()
     proxies = kwargs.get("proxy", None)
@@ -163,63 +179,65 @@ def httpraw(raw: str, **kwargs) -> requests.Response:
     real_host = kwargs.get("real_host", None)
     ssl = kwargs.get("ssl", False)
 
+    if real_host:
+        real_host = real_host.encode()
     # ? Judgment scheme
     scheme = 'http'
-    port = 80
+    port = b"80"
     if ssl:
         scheme = 'https'
-        port = 443
+        port = b"443"
 
     try:
-        index = raw.index('\n')
+        index = raw.index(b'\n')
     except ValueError:
         raise Exception("ValueError")
     # ? get method, path and protocol
     try:
-        method, path, protocol = raw[:index].split(" ")
+        method, path, protocol = raw[:index].split(b" ")
     except Exception:
         raise Exception("Protocol format error")
     raw = raw[index + 1:]
 
     # ? get host
     try:
-        host_start = raw.index("Host: ")
-        host_end = raw.index('\n', host_start)
+        host_start = raw.index(b"Host: ")
+        host_end = raw.index(b'\n', host_start)
 
     except ValueError:
         raise ValueError("Host headers not found")
 
     if real_host:
         host = real_host
-        if ":" in real_host:
-            host, port = real_host.split(":")
+        if b":" in real_host:
+            host, port = real_host.split(b":")
     else:
         host = raw[host_start + len("Host: "):host_end]
-        if ":" in host:
-            host, port = host.split(":")
+        if b":" in host:
+            host, port = host.split(b":")
     raws = raw.splitlines()
     headers = {}
     index = 0
     # ? get headers
     for r in raws:
-        if r == "":
+        if r == b"":
             break
         try:
-            k, v = r.split(": ")
+            k, v = r.split(b": ")
         except Exception:
             k = r
             v = ""
-        headers[k] = v
+        headers[k.decode()] = v.decode()
         index += 1
     headers["Connection"] = "close"
     # ? get body
     if len(raws) < index + 1:
-        body = ''
+        body = b''
     else:
-        body = '\n'.join(raws[index + 1:]).lstrip()
+        body = b'\n'.join(raws[index + 1:]).lstrip()
 
     # ? get url
-    url = f"{scheme}://{host}:{port}/{path}"
+    url = f"{scheme}://{host.decode()}:{port.decode()}/{path.decode()}"
     # ? get content-length
     if body and "Content-Length" not in headers and "Transfer-Encoding" not in headers:
         headers["Content-Length"] = str(len(body))
@@ -237,10 +255,12 @@ def httpraw(raw: str, **kwargs) -> requests.Response:
     elif _is_json(body) and headers["Content-Type"] not in ["application/json", "multipart/form-data"]:
         headers["Content-Type"] = "application/json"
     if headers["Content-Type"] == "application/x-www-form-urlencoded":
-        body = dict([l.split("=")
-                     for l in body.strip().split(";") if "=" in l])
+        body = dict([l.split(b"=")
+                     for l in body.strip().split(b"&") if b"=" in l])
+        body = {k.strip().decode(): v.strip().decode()
+                for k, v in body.items()}
     elif headers["Content-Type"] == "multipart/form-data":
-        parse_dict = parse_form_data(body)
+        parse_dict = _parse_form_data(body)
         body = parse_dict["data"]
 
     # ? prepare request

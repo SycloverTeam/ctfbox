@@ -1,9 +1,13 @@
 [project]
 name = "ctfbox"
-version = "1.2.1"
-description = ""
+version = "1.3.0"
+description = "A box for CTF challenges with some sugar functions, Just enjoy it"
 authors = [
-    {name = "Syclover", email = "toloveu29@gmail.com"},
+    "Syclover <>",
+    "Longlone <toloveu29@gmail.com>",
+    "pjx <pjx3231@163.com>",
+    "lingze <lingze.wl@gmail.com>",
+    "F4ded <452584023@qq.com>",
 ]
 dependencies = [
     "requests<3.0.0,>=2.25.1",

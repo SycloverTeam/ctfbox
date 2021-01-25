@@ -68,6 +68,9 @@ Some functions with names similar to PHP, close to intuition
 (***⚠️ There is no flask dependency in ctfbox itself, the following two functions need to install the dependency by yourself***)
   - flask_session_encode(secret_key: str, payload: dict) -> str
   - flask_session_decode(session_data: str, secret_key: str) -> dict
+- php_serialize_escape_helper
+  - php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False) -> Tuple[str, int]
+  - php_serialize_escape_l2s(src: str, dst: str, disString: str, payload: str, paddingTrush: bool = False) -> Tuple[str, int]
 - provide(host: str = "0.0.0.0", port: int = 2005, isasync: bool = False, files: List[Tuple[Union[filepath, content], routePath, contentType]] = {})
    ```
    A simple and customizable http server.
@@ -165,10 +168,13 @@ Other
 
 ## Logs
 
-### 1.3.0(TODO)
-- some functions:
+### 1.3.0
+- refactor project structure
+- add some functions:
     - flask_session_encode
     - flask_session_decode
+    - php_serialize_escape_l2s
+    - php_serialize_escape_s2l
     - gopherraw
 ### 1.2.1
 httpraw:

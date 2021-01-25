@@ -96,7 +96,7 @@ Some functions with names similar to PHP, close to intuition
    ```
 
 ### REVERSE
-please refer to source code for functions signatures and usage
+please refer to source code for function's signatures and usages
 - print data in hex format: `printHex()`
 - pack number into bytes: `p16()`, `p32()`, `p64()`
 - unpack number from bytes: `u16()`, `u32()`, `u64()`
@@ -107,7 +107,7 @@ please refer to source code for functions signatures and usage
 ### PWN
 - Usage
    ```python
-   # Don't support windows
+   # Doesn't support Windows
    from pwn import * # import pwntools
    # set pwntools config...
    # context.os = 'linux'
@@ -128,7 +128,7 @@ please refer to source code for functions signatures and usage
    # import pwn part
    from ctfbox.pwn import *
    ```
-   now you can use the below attributes/functions
+   now you can use the attributes/functions below
    ```
    slog // empty dictionary, you can set the leaked address and corresponding name. e.g. slog['libc'] = libc_addr
    elf  // pwntools.ELF(binaray)

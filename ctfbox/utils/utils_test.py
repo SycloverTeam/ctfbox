@@ -1,6 +1,5 @@
 import unittest
-import sys
-from utils import *
+from ctfbox.utils.utils import *
 
 
 class TestUtils(unittest.TestCase):

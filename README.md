@@ -187,11 +187,29 @@ Some functions Write by ourselves
    - real_host(str): use real host instead of Host if set
    - ssl(bool)     : whether https
    ```
-- gopherraw(raw: str, host: str = "",  urlencode: bool = False) -> str
+- gopherraw(raw: str, host: str = "",  ssrfFlag: bool = False) -> str
    ```
    Generate gopher requests URL form a raw http request
    ```
+   Here is an example.
+   ```python
+   raw = """POST /admin HTTP/1.1
+   Host: 127.0.0.1:5000
+   User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0
+   Content-Type: application/x-www-form-urlencoded
+   Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+   Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2
+   Connection: close
+   Cookie: isAdmin=1
+   Upgrade-Insecure-Requests: 1
+   Content-Length: 3
 
+   a=b"""
+
+   print(gopherraw(raw, ssrfFlag=False))
+   # output is gopher://127.0.0.1:5000/_%0D%0APOST%20/admin%20HTTP/1.1%0D%0AHost%3A%20127.0.0.1%3A5000%0D%0AUser-Agent%3A%20Mozilla/5.0%20%28Windows%20NT%2010.0%3B%20Win64%3B%20x64%3B%20rv%3A84.0%29%20Gecko/20100101%20Firefox/84.0%0D%0AContent-Type%3A%20application/x-www-form-urlencoded%0D%0AAccept%3A%20text/html%2Capplication/xhtml%2Bxml%2Capplication/xml%3Bq%3D0.9%2Cimage/webp%2C%2A/%2A%3Bq%3D0.8%0D%0AAccept-Language%3A%20zh-CN%2Czh%3Bq%3D0.8%2Czh-TW%3Bq%3D0.7%2Czh-HK%3Bq%3D0.5%2Cen-US%3Bq%3D0.3%2Cen%3Bq%3D0.2%0D%0AConnection%3A%20close%0D%0ACookie%3A%20isAdmin%3D1%0D%0AUpgrade-Insecure-Requests%3A%201%0D%0AContent-Length%3A%203%0D%0A%0D%0Aa%3Db
+   # curl this url directly
+   ```
 ## Techniques
 - [pdm](https://github.com/frostming/pdm)
 - [version-helper](https://github.com/WAY29/version-helper/)

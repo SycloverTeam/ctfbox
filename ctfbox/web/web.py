@@ -562,7 +562,7 @@ def php_serialize_escape_l2s(src: str, dst: str, disString: str, payload: str, p
         tuple[1](int): length of the generated payload
 
     Example:
-        print(php_serialize_escape_l2s('aaaa', 'bb', 's:6:"passwd";s:5:"test1"', 's:6:"passwd";s:6:"123456"'))
+        print(php_serialize_escape_l2s('aaaa', 'bb', 's:6:"passwd";s:5:"test1"', 's:6:"passwd";s:6:"123456"', True))
     """
     diff_len = len(src) - len(dst)
     if diff_len <= 0:

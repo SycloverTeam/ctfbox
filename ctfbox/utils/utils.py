@@ -14,9 +14,9 @@ from typing import Dict, Union
 from urllib.parse import quote_plus, unquote_plus
 
 import jwt
-import requests
 
 DEFAULT_ALPHABET = list(ascii_lowercase + digits)
+
 
 def FlaskSessionHelperError(Exception):
     pass
@@ -213,7 +213,8 @@ def flask_session_encode(secret_key: str, payload: dict) -> str:
 
     """
     if not check_flask_import():
-        raise ImportError("Please install moudle flask. e.g. python3 -m pip install flask")
+        raise ImportError(
+            "Please install moudle flask. e.g. python3 -m pip install flask")
     from flask.sessions import SecureCookieSessionInterface
     try:
         app = App(secret_key)
@@ -236,7 +237,8 @@ def flask_session_decode(session_data: str, secret_key: str) -> dict:
 
     """
     if not check_flask_import():
-        raise ImportError("Please install moudle flask. e.g. python3 -m pip install flask")
+        raise ImportError(
+            "Please install moudle flask. e.g. python3 -m pip install flask")
     from flask.sessions import SecureCookieSessionInterface
     try:
         app = App(secret_key)

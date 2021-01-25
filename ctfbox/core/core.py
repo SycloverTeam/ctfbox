@@ -1,9 +1,10 @@
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial, wraps
 from http.server import HTTPServer
+from json import loads
 from threading import Thread
 from typing import List, Tuple, Union
-from json import loads
+from urllib.parse import quote
 
 import requests
 
@@ -272,3 +273,35 @@ def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
                   timeout=timeout,
                   verify=verify,
                   )
+
+
+def gopherraw(raw: str, host: str = "",  ssrfFlag: bool = True) -> str:
+    """Generate gopher requests URL form a raw http request
+
+    Args:
+        raw (str): raw http request
+        host (str, optional): use this as the real host if this value is set. Defaults to "".
+        ssrfFlag (bool, optional): The entire URL will be encoded again if this value is set True. Defaults to True.
+
+    Returns:
+        str: gopher requests URL
+    """
+    data = ""
+    for row in raw.split("\n"):
+        if len(row) > 0 and row[-1] == "\r":
+            data += quote(row + "\n")
+        else:
+            data += quote("\r\n" + row)
+
+        header = row.lower().strip()
+        if header.startswith("host:"):
+            if host == "":
+                host = header[5:].strip()
+                if ":" not in host:
+                    host += ":80"
+
+    header = "gopher://" + host + "/_"
+
+    if ssrfFlag:
+        return quote(header + data)
+    return header + data

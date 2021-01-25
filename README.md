@@ -176,7 +176,7 @@ Some functions Write by ourselves
    ### Make the range bigger!!
    print(hashAuth(answer="59e711d", endIndex=7, maxRange=2000000))
    ```
-- httpraw(raw: Union[bytes, str], **kwargs -> requests.Response):
+- httpraw(raw: Union[bytes, str], **kwargs -> requests.Response)
    ```
    Send raw request by python-requests
    
@@ -186,6 +186,10 @@ Some functions Write by ourselves
    - verify(bool)  : requests verify
    - real_host(str): use real host instead of Host if set
    - ssl(bool)     : whether https
+   ```
+- gopherraw(raw: str, host: str = "",  urlencode: bool = False) -> str
+   ```
+   Generate gopher requests URL form a raw http request
    ```
 
 ## Techniques
@@ -209,6 +213,10 @@ Other
 ## Logs
 
 ### 1.3.0(TODO)
+- some functions:
+    - flask_session_encode
+    - flask_session_decode
+    - gopherraw
 ### 1.2.1
 httpraw:
    - fix a bug that httpraw may not be able to send post request correctly

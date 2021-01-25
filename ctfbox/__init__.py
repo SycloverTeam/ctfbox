@@ -1,3 +1,5 @@
+""" A toolbox for CTF challenges with some sugary functions, Just enjoy it
+"""
 from ctfbox.utils import *
 from ctfbox.web import *
 from ctfbox.reverse import *

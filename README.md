@@ -5,7 +5,23 @@ Current version: **1.2.1**
 
 Please use python **3.6+**
 
-[TOC]
+### Guide
+- [ctfbox](#ctfbox)
+  * [Guide](#guide)
+- [Install](#install)
+- [Usage](#usage)
+  * [Common](#common)
+  * [PWN](#pwn)
+- [Functions](#functions)
+  * [utils](#utils)
+  * [WEB](#web)
+  * [REVERSE](#reverse)
+  * [MISC](#misc)
+  * [PWN](#pwn-1)
+- [Techniques](#techniques)
+- [Depends](#depends)
+- [Contributors](#contributors)
+- [Logs](#logs)
 ## Install
 All you need to do is
 ```sh

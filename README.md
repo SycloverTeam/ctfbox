@@ -5,6 +5,23 @@ Current version: **1.2.1**
 
 Please use python **3.6+**
 
+### Guide
+- [ctfbox](#ctfbox)
+  * [Guide](#guide)
+- [Install](#install)
+- [Usage](#usage)
+  * [Common](#common)
+  * [PWN](#pwn)
+- [Functions](#functions)
+  * [utils](#utils)
+  * [WEB](#web)
+  * [REVERSE](#reverse)
+  * [MISC](#misc)
+  * [PWN](#pwn-1)
+- [Techniques](#techniques)
+- [Depends](#depends)
+- [Contributors](#contributors)
+- [Logs](#logs)
 ## Install
 All you need to do is
 ```sh
@@ -15,147 +32,54 @@ pip install ctfbox
 
 ### Common
 ```python
-from ctfbox import * # Will not import the pwn part, please check the Pwn Usage section below
+from ctfbox import * # Will not import the pwn part, please check the PWN Usage section below
 # enjoy it
 ```
-
-### Pwn Usage
-```python
-# Don't support windows
-from pwn import * # import pwntools
-# set pwntools config...
-# context.os = 'linux'
-# context.log_level = 'debug'
-# context.arch = 'amd64'
-from ctfbox.pwntools.config import Config # import confit for pwn part of ctfbox
-# set necessary config 
-"""
-Attributes:
-- local(bool) : connect to local binary / remote address, default: True
-- bin(str)    : the binary path, e.g. './pwn'
-- address(str): the remote address, e.g. '127.0.0.1:2333'
-- pie(bool)   : whether the memory address is randomized, default: False
-"""
-Config.local = True
-Config.address = "127.0.0.1:2333"
-Config.bin = "./bin"
-# import pwn part
-from ctfbox.pwn import *
-```
-now you can use the below attributes/functions
-```
-slog // empty dictionary, you can set the leaked address and corresponding name. e.g. slog['libc'] = libc_addr
-elf  // pwntools.ELF(binaray)
-cn   // a connect to local binary or remote address
-re   // lambda of cn.recv(m, t)
-recv // lambda of cn.recv()
-ru   // lambda of cn.recvuntil(x)
-rl   // lambda of cn.recvline()
-sd   // lambda of cn.send(x)
-sl   // lambda of cn.sendline(x)
-ia   // lambda of cn.interactive()
-sla  // lambda of cn.sendlineafter(a, b)
-sa   // lambda of cn.sendafter(a, b)
-ft   // ft(arg, f=pwnlib.util.cyclic.de_bruijn(), l=None) lambda of flat(*arg, filler=f, length=l)
-gdba // gdba(bps) debug, argument bps save the breakpoint address, breakpoint can also be automatically set when pie is turned on, need pmap command
-slog_show // print all set slogs, in hexadecimal format
-```
-
-
+### PWN
+[PWN Usage](#pwn-1)
 ## Functions
-
 ### utils
 Some functions with names similar to PHP, close to intuition
 - url_encode(s: str, encoding: str = 'utf-8') -> str
 - url_decode(s: str, encoding: str = 'utf-8') -> str
 - base64_decode(s: str, encoding='utf-8') -> str
 - base64_encode(s: str, encoding='utf-8') -> str
+- bin2hex(s: str) -> str
+- hex2bin(s: str) -> str
 - json_encode(obj) -> object
 - json_decode(data) -> str
 - jwt_decode(token: str) -> bytes
 - jwt_encode(header: dict, payload: dict, key=None, algorithm=None) -> str
-- bin2hex(s: str) -> str
-- hex2bin(s: str) -> str
 - sha1(s: str, encoding='utf-8') -> str
 - sha256(s: str, encoding='utf-8') -> str
 - md5(s: str, encoding='utf-8') -> str
 - random_int(minN: int = 0, maxN: int = 1024) -> int
 - random_string(n: int = 32, alphabet: str = "") -> str
-
-Some functions that may be used in web
-- get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app", appName: str = "Flask") -> str
-
-Some functions that may be used in reverse engineering
-* print data in hex format: `printHex()`
-* pack number into bytes: `p16()`, `p32()`, `p64()`
-* unpack number from bytes: `u16()`, `u32()`, `u64()`
-
-please refer to source code for functions signatures and usage
-
-
-
-Some functions that may be used in misc
-
-***TODO***
-
-Some other functions
 - od_parse(data: str) -> Dict[str, Union[str, list]]
-
-
-### core
-Some functions Write by ourselves
 - Threader(number: int, timeout: int = None, retry: int = 2)
    ```
     A simple decorator function that can decorate the function to make it multi-threaded.
    ```
-   Here is a example.
-   ```Python
-   from ctfbox import Threader, random_string, random_int
-   from time import sleep
+  
 
-   @Threader(10)
-   def exp(i: int):
-       sleep(random_int(1, 5))
-       return "%d : %s" % (i, random_string())
-    
-    tasks = [exp(i) for i in range(100)] # 100 tasks
-    for task in tasks: 
-        # task.result return when a task completed
-        # task is a concurrent.futures.Future with some sugar attributes
-        print('result: %s running: %s done: %s exception: %s' % (task.result, task.running, task.done, task.exception))
-   ```
+### WEB
+- get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app", appName: str = "Flask") -> str
+- flask_session_helper
+(***⚠️ There is no flask dependency in ctfbox itself, the following two functions need to install the dependency by yourself***)
+  - flask_session_encode(secret_key: str, payload: dict) -> str
+  - flask_session_decode(session_data: str, secret_key: str) -> dict
+- php_serialize_escape_helper
+  - php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False) -> Tuple[str, int]
+  - php_serialize_escape_l2s(src: str, dst: str, disString: str, payload: str, paddingTrush: bool = False) -> Tuple[str, int]
 - provide(host: str = "0.0.0.0", port: int = 2005, isasync: bool = False, files: List[Tuple[Union[filepath, content], routePath, contentType]] = {})
    ```
    A simple and customizable http server.
-   ```
-   Here are some examples.
-   ```python
-   # provide a exist file named index.html
-   provide(files=[('index.html',)])
-   # Here is a trick if you provide only one file
-   provide(files=['index.html'])
-   # route /index.html provide content Hello world\n
-   provide(files=[(b"Hello world\\n", "/index.html")])
-   # provide some files
-   provide(files=[("test.txt", ), ("index.html", )])
    ```
 - hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange: int = 1000000, threadNum: int = 25, hashType: HashType = HashType.MD5) -> str
    ```
    A function used to blast the first few bits of the hash, often used to crack the ctf verification code
    ```
-   Here are some examples.
-   ```python
-   ### HashType optional value: HashType.MD5, HashType.SHA1, HashType.SHA256, HashType.SHA512
-   ### Crack the first five number MD5 type ctf verification codes
-   print(hashAuth(answer="02fcf"))
-   ### Crack the first five number SHA1 type ctf verification codes
-   print(hashAuth(answer="d13ce", hashType=HashType.SHA1))
-   #### Crack more quickly!!
-   print(hashAuth(answer="c907773", endIndex=7, threadNum=50))
-   ### Make the range bigger!!
-   print(hashAuth(answer="59e711d", endIndex=7, maxRange=2000000))
-   ```
-- httpraw(raw: Union[bytes, str], **kwargs -> requests.Response):
+- httpraw(raw: Union[bytes, str], **kwargs -> requests.Response)
    ```
    Send raw request by python-requests
    
@@ -166,6 +90,63 @@ Some functions Write by ourselves
    - real_host(str): use real host instead of Host if set
    - ssl(bool)     : whether https
    ```
+- gopherraw(raw: str, host: str = "",  ssrfFlag: bool = False) -> str
+   ```
+   Generate gopher requests URL form a raw http request
+   ```
+
+### REVERSE
+please refer to source code for function's signatures and usages
+- print data in hex format: `printHex()`
+- pack number into bytes: `p16()`, `p32()`, `p64()`
+- unpack number from bytes: `u16()`, `u32()`, `u64()`
+
+### MISC
+- TODO
+
+### PWN
+- Usage
+   ```python
+   # Doesn't support Windows
+   from pwn import * # import pwntools
+   # set pwntools config...
+   # context.os = 'linux'
+   # context.log_level = 'debug'
+   # context.arch = 'amd64'
+   from ctfbox.pwntools.config import Config # import confit for pwn part of ctfbox
+   # set necessary config 
+   """
+   Attributes:
+   - local(bool) : connect to local binary / remote address, default: True
+   - bin(str)    : the binary path, e.g. './pwn'
+   - address(str): the remote address, e.g. '127.0.0.1:2333'
+   - pie(bool)   : whether the memory address is randomized, default: False
+   """
+   Config.local = True
+   Config.address = "127.0.0.1:2333"
+   Config.bin = "./bin"
+   # import pwn part
+   from ctfbox.pwn import *
+   ```
+   now you can use the attributes/functions below
+   ```
+   slog // empty dictionary, you can set the leaked address and corresponding name. e.g. slog['libc'] = libc_addr
+   elf  // pwntools.ELF(binaray)
+   cn   // a connect to local binary or remote address
+   re   // lambda of cn.recv(m, t)
+   recv // lambda of cn.recv()
+   ru   // lambda of cn.recvuntil(x)
+   rl   // lambda of cn.recvline()
+   sd   // lambda of cn.send(x)
+   sl   // lambda of cn.sendline(x)
+   ia   // lambda of cn.interactive()
+   sla  // lambda of cn.sendlineafter(a, b)
+   sa   // lambda of cn.sendafter(a, b)
+   ft   // ft(arg, f=pwnlib.util.cyclic.de_bruijn(), l=None) lambda of flat(*arg, filler=f, length=l)
+   gdba // gdba(bps) debug, argument bps save the breakpoint address, breakpoint can also be automatically set when pie is turned on, need pmap command
+   slog_show // print all set slogs, in hexadecimal format
+   ```
+
 
 ## Techniques
 - [pdm](https://github.com/frostming/pdm)
@@ -187,7 +168,15 @@ Other
 
 ## Logs
 
-### 1.2.1(TODO)
+### 1.3.0
+- refactor project structure
+- add some functions:
+    - flask_session_encode
+    - flask_session_decode
+    - php_serialize_escape_l2s
+    - php_serialize_escape_s2l
+    - gopherraw
+### 1.2.1
 httpraw:
    - fix a bug that httpraw may not be able to send post request correctly
    - fix a bug that could not solve port

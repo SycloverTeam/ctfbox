@@ -1,25 +1,150 @@
 import re
+from os import path
 from base64 import (b32encode, b64decode, b64encode, urlsafe_b64decode,
                     urlsafe_b64encode)
 from binascii import hexlify, unhexlify
 from hashlib import md5 as _md5
 from hashlib import sha1 as _sha1
 from hashlib import sha256 as _sha256
-from itertools import chain
+from hashlib import sha512 as _sha512
 from json import dumps, loads
 from random import choice, randint
 from string import ascii_lowercase, digits
 from struct import pack, unpack
 from typing import Dict, Union
-from urllib.parse import quote_plus, unquote_plus
+from urllib.parse import urlparse, quote_plus, unquote_plus
+from functools import wraps
+from http.server import BaseHTTPRequestHandler
+from concurrent.futures import ThreadPoolExecutor
 
 import jwt
-import requests
 
 DEFAULT_ALPHABET = list(ascii_lowercase + digits)
 
-def FlaskSessionHelperError(Exception):
-    pass
+
+class Context:
+    def __init__(self, value=None):
+        self.value = value
+
+
+class _Multier():
+
+    def __init__(self, future, timeout, retry, pool):
+        self._future = future
+        self._timeout = timeout
+        self._retry = retry
+        self._pool = pool
+
+    def __getattr__(self, name):
+        if (name == 'result'):
+            return self.join()
+        elif (name == 'pool'):
+            return self._pool
+        elif (name == 'exception'):
+            return self._future.exception()
+        elif (name == 'running'):
+            return self._future.running()
+        elif (name == 'done'):
+            return self._future.done()
+        else:
+            return self._future.__getattribute__(name)
+
+    def join(self):
+        try:
+            return self._future.result(self._timeout)
+        except Exception:
+            if (self._retry > 0):
+                self._retry -= 1
+                return self.join()
+            else:
+                self._future.result = lambda: None
+
+
+def Threader(number: int, timeout: int = None, retry: int = 2):
+    """
+    A simple decorator function that can decorate the function to make it multi-threaded.
+    """
+    def decorator(func):
+        if isinstance(number, int):
+            pool = ThreadPoolExecutor(number)
+        else:
+            raise TypeError(
+                "Invalid type: %s for number"
+                % type(number)
+            )
+
+        @wraps(func)
+        def wrapped(*args, **kwargs):
+            return _Multier(
+                pool.submit(func, *args, **kwargs),
+                timeout,
+                retry,
+                pool,
+            )
+        return wrapped
+    return decorator
+
+
+class ProvideHandler(BaseHTTPRequestHandler):
+
+    def __init__(self, ServeFiles, *args, **kwargs):
+        self.serveFiles = ServeFiles
+        super().__init__(*args, **kwargs)
+
+    def guess_type(self, filename):
+        mimetype = 'text/plain'
+        if filename.endswith(".html"):
+            mimetype = 'text/html'
+        if filename.endswith(".jpg"):
+            mimetype = 'image/jpg'
+        if filename.endswith(".gif"):
+            mimetype = 'image/gif'
+        if filename.endswith(".js"):
+            mimetype = 'application/javascript'
+        if filename.endswith(".css"):
+            mimetype = 'text/css'
+        return mimetype
+
+    def do_GET(self):
+        sendReply = False
+        querypath = urlparse(self.path)
+        filepath = querypath.path
+        try:
+            for fileInfo in self.serveFiles:
+                lenOfFileInfo = len(fileInfo)
+                arg = fileInfo[0]
+                filename = ""
+                content = b''
+                if isinstance(arg, bytes):
+                    content = arg
+                elif isinstance(arg, str) and path.isfile(arg):
+                    try:
+                        fp = open(arg, 'rb')
+                        content = fp.read()
+                        filename = path.basename(arg)
+                        fp.close()
+                    except Exception:
+                        continue
+                else:
+                    continue
+                # ? No routing and no file name
+                if filename == "" and lenOfFileInfo < 2:
+                    continue
+                route = "/"+filename if lenOfFileInfo < 2 else fileInfo[1]
+                content_type = self.guess_type(
+                    route) if lenOfFileInfo < 3 else fileInfo[2]
+                if filepath == route:
+                    sendReply = True
+                    self.send_response(200)
+                    self.send_header("Content-type", content_type)
+                    self.end_headers()
+                    self.wfile.write(content)
+            if not sendReply:
+                self.send_response(404)
+                self.wfile.write(b"404 Not Found\n")
+            return
+        except Exception as e:
+            print("[-] " + str(e))
 
 
 def url_encode(s: str, encoding: str = 'utf-8') -> str:
@@ -74,6 +199,13 @@ def sha1(s: str, encoding='utf-8') -> str:
 def sha256(s: str, encoding='utf-8') -> str:
     try:
         return _sha256(s.encode(encoding=encoding)).hexdigest()
+    except Exception:
+        return ""
+
+
+def sha512(s: str, encoding='utf-8') -> str:
+    try:
+        return _sha512(s.encode(encoding=encoding)).hexdigest()
     except Exception:
         return ""
 
@@ -141,272 +273,6 @@ def jwt_decode(token: str) -> bytes:
         pass
 
     return b'-'.join(data)
-
-
-# ? web
-
-
-def get_flask_pin(username: str, absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app",
-                  appName: str = "Flask") -> str:
-    rv, num = None, None
-    probably_public_bits = [
-        username,
-        modName,
-        # getattr(app, '__name__', getattr(app.__class__, '__name__'))
-        appName,
-        # getattr(mod, '__file__', None),
-        absRootPath,
-    ]
-
-    private_bits = [
-        # str(uuid.getnode()),  /sys/class/net/ens33/address
-        str(int(macAddress.strip().replace(":", ""), 16)),
-        machineId,  # get_machine_id(), /etc/machine-id
-    ]
-
-    h = _md5()
-    for bit in chain(probably_public_bits, private_bits):
-        if not bit:
-            continue
-        if isinstance(bit, str):
-            bit = bit.encode('utf-8')
-        h.update(bit)
-    h.update(b'cookiesalt')
-
-    h.update(b'pinsalt')
-    num = ('%09d' % int(h.hexdigest(), 16))[:9]
-
-    for group_size in 5, 4, 3:
-        if len(num) % group_size == 0:
-            rv = '-'.join(num[x:x + group_size].rjust(group_size, '0')
-                          for x in range(0, len(num), group_size))
-            break
-    else:
-        rv = num
-    return rv
-
-
-# flask_session_helper
-
-def check_flask_import():
-    try:
-        from flask.sessions import SecureCookieSessionInterface
-        return True
-    except ImportError as e:
-        return False
-
-
-class App:
-    def __init__(self, secret_key: str):
-        self.secret_key = secret_key
-
-
-def flask_session_encode(secret_key: str, payload: dict) -> str:
-    """encode flask session
-
-    Args:
-        secret_key: secret_key
-        payload: The data you want to encode
-
-    Returns:
-        str: session data
-
-    """
-    if not check_flask_import():
-        raise ImportError("Please install moudle flask. e.g. python3 -m pip install flask")
-    from flask.sessions import SecureCookieSessionInterface
-    try:
-        app = App(secret_key)
-        scsi = SecureCookieSessionInterface()
-        s = scsi.get_signing_serializer(app)
-        return s.dumps(payload)
-    except Exception as e:
-        raise FlaskSessionHelperError("Encode error") from e
-
-
-def flask_session_decode(session_data: str, secret_key: str) -> dict:
-    """decode flask session
-
-    Args:
-        session_data: The session you want to decode
-        secret_key: secret_key
-
-    Returns:
-        dict: session data information
-
-    """
-    if not check_flask_import():
-        raise ImportError("Please install moudle flask. e.g. python3 -m pip install flask")
-    from flask.sessions import SecureCookieSessionInterface
-    try:
-        app = App(secret_key)
-        scsi = SecureCookieSessionInterface()
-        s = scsi.get_signing_serializer(app)
-        return s.loads(session_data)
-    except Exception as e:
-        raise FlaskSessionHelperError("Deocde error") from e
-
-
-# ? Reverse
-
-def printHex(data: Union[bytes, str], up: bool = True, sep: str = ' '):
-    if isinstance(data, str):
-        data = data.encode()
-    bs = list(data)
-    for i in range(len(bs)):
-        print(('%02X' if up else '%02x') % bs[i], end=sep)
-        if (i + 1) % 16 == 0:
-            print()
-
-
-def _get_pack_fmtstr(sign, endianness, N):
-    byte_order = {
-        'little': '<',
-        'big': '>'
-    }
-    number_type = {
-        'unsigned': {
-            16: 'H',
-            32: 'I',
-            64: 'Q',
-        },
-        'signed': {
-            16: 'h',
-            32: 'i',
-            64: 'q',
-        }
-    }
-    return byte_order[endianness] + number_type[sign][N]
-
-
-def _pN(N: int, number: int, sign: str, endianness: str) -> bytes:
-    fmt = _get_pack_fmtstr(sign, endianness, N)
-    # use 0xff...ff and N to calculate a mask
-    return pack(fmt, number & (0xffffffffffffffff >> (64 - N)))
-
-
-def p16(number: int, sign: str = 'unsigned', endianness: str = 'little') -> bytes:
-    """Pack a 16-bit number
-
-    Args:
-        number (int): Number to convert
-        sign (str, optional): Signedness ("signed"/"unsigned"). Defaults to 'unsigned'.
-        endianness (str, optional): Endianness ("little"/"big"). Defaults to 'little'.
-
-    Returns:
-        bytes: The packed bytes
-    """
-    return _pN(16, number, sign, endianness)
-
-
-def p32(number: int, sign: str = 'unsigned', endianness: str = 'little') -> bytes:
-    """Pack a 32-bit number
-
-    Args:
-        number (int): Number to convert
-        sign (str, optional): Signedness ("signed"/"unsigned"). Defaults to 'unsigned'.
-        endianness (str, optional): Endianness ("little"/"big"). Defaults to 'little'.
-
-    Returns:
-        bytes: The packed bytes
-    """
-    return _pN(32, number, sign, endianness)
-
-
-def p64(number: int, sign: str = 'unsigned', endianness: str = 'little') -> bytes:
-    """Pack a 64-bit number
-
-    Args:
-        number (int): Number to convert
-        sign (str, optional): Signedness ("signed"/"unsigned"). Defaults to 'unsigned'.
-        endianness (str, optional): Endianness ("little"/"big"). Defaults to 'little'.
-
-    Returns:
-        bytes: The packed bytes
-    """
-    return _pN(64, number, sign, endianness)
-
-
-def _uN(N: int, data: bytes, sign: str, endianness: str, ignore_size: bool) -> int:
-    fmt = _get_pack_fmtstr(sign, endianness, N)
-
-    if ignore_size:
-        size = N // 8
-        data_len = len(data)
-        if data_len < size:
-            data += b'\x00' * (size - data_len)
-        elif data_len > size:
-            data = data[:size]
-
-    return unpack(fmt, data)[0]
-
-
-def u16(data: bytes, sign: str = 'unsigned', endianness: str = 'little', ignore_size=True) -> int:
-    """Unpacks an 16-bit integer
-
-    Args:
-        data (bytes): bytes data to convert
-        sign (str, optional): signedness ("signed"/"unsigned"). Defaults to 'unsigned'.
-        endianness (str, optional): endianness ("little"/"big"). Defaults to 'little'.
-        ignore_size (bool, optional): automatically pad data or truncate it to match the size . Defaults to True.
-
-    Returns:
-        int: The unpacked number
-    """
-    return _uN(16, data, sign, endianness, ignore_size)
-
-
-def u32(data: bytes, sign: str = 'unsigned', endianness: str = 'little', ignore_size=True) -> int:
-    """Unpacks an 32-bit integer
-
-    Args:
-        data (bytes): bytes data to convert
-        sign (str, optional): signedness ("signed"/"unsigned"). Defaults to 'unsigned'.
-        endianness (str, optional): endianness ("little"/"big"). Defaults to 'little'.
-        ignore_size (bool, optional): automatically pad data or truncate it to match the size . Defaults to True.
-
-    Returns:
-        int: The unpacked number
-    """
-    return _uN(32, data, sign, endianness, ignore_size)
-
-
-def u64(data: bytes, sign: str = 'unsigned', endianness: str = 'little', ignore_size=True) -> int:
-    """Unpacks an 64-bit integer
-
-    Args:
-        data (bytes): bytes data to convert
-        sign (str, optional): signedness ("signed"/"unsigned"). Defaults to 'unsigned'.
-        endianness (str, optional): endianness ("little"/"big"). Defaults to 'little'.
-        ignore_size (bool, optional): automatically pad data or truncate it to match the size . Defaults to True.
-
-    Returns:
-        int: The unpacked number
-    """
-    return _uN(64, data, sign, endianness, ignore_size)
-
-
-def std_b32table() -> bytes:
-    """Get a standard Base32 table
-
-    Returns:
-        bytes: Base32 table in bytes format, use std_b64table().decode() to get a 'str' one
-    """
-    return b32encode(bytes(list(
-        map(lambda x: int(x, 2), re.findall('.{8}', ''.join(map(lambda x: bin(x)[2:].zfill(5), list(range(32)))))))))
-
-
-def std_b64table() -> bytes:
-    """Get a standard Base64 table
-
-    Returns:
-        bytes: Base64 table in bytes format, use std_b64table().decode() to get a 'str' one
-    """
-    return b64encode(bytes(list(
-        map(lambda x: int(x, 2), re.findall('.{8}', ''.join(map(lambda x: bin(x)[2:].zfill(6), list(range(64)))))))))
-
-
-# ? other
 
 
 def od_parse(data: str) -> Dict[str, Union[str, list]]:

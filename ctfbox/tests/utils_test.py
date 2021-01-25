@@ -1,5 +1,5 @@
 import unittest
-from ctfbox.utils.utils import *
+from ctfbox.utils import *
 
 
 class TestUtils(unittest.TestCase):
@@ -86,28 +86,10 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(result, jwt_encode(
             header_example, payload_example, '123456', 'HS256'))
 
-    def test__pN(self):
-        # when passing number and sign that dosenot match,
-        # it shall get error from python builtin module struct
-        self.assertEqual(b'\xcd\xab', p16(0xabcd))
-        self.assertEqual(b'\xab\xcd', p16(0xabcd, endianness='big'))
-        self.assertEqual(b'\x15\xcd[\x07', p32(123456789))
-        self.assertEqual(b'\x07[\xcd\x15', p32(123456789, endianness='big'))
-
-    def test__uN(self):
-        self.assertEqual(0xcdab, u16(b'\xab\xcd'))
-        self.assertEqual(0xabcd, u16(b'\xab\xcd', endianness='big'))
-        self.assertEqual(0x00ab, u16(b'\xab'))
-        self.assertEqual(0x61626364, u32(b'dcba'))
-
     def test_od_parse(self):
         self.assertEqual(od_parse("""0000000 074523 066143 073157 071145 072173 071545 057564 062157
 0000020 070137 071141 062563 005175
 0000030""")["text"], "Syclover{test_od_parse}\n")
-
-    def test_get_flask_pin(self):
-        self.assertEqual(get_flask_pin("kingkk", "/home/kingkk/.local/lib/python3.5/site-packages/flask/app.py",
-                                       "00:0c:29:e5:45:6a", "19949f18ce36422da1402b3e3fe53008"), "169-851-075")
 
 
 if __name__ == '__main__':

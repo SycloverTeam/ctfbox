@@ -98,7 +98,7 @@ def _parse_form_data(body):
     return parse_dict
 
 
-def _generateTrush(diff_len: int, remain: int):
+def _generateTrash(diff_len: int, remain: int):
     pure_string_len = 12
     k = ceil((remain + pure_string_len) / diff_len)
     filed_len = k * diff_len - 12 - remain
@@ -541,7 +541,7 @@ def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: boo
     if remain != 0:
         if not paddingTrush:
             raise GeneratePayloadError("payload length error, try modify it, maybe you can put {paddingTrush=True} into the function")
-        k, trush = _generateTrush(diff_len, remain)
+        k, trush = _generateTrash(diff_len, remain)
         padding_len += k
         payload = trush + payload
     payload = '";' + payload + ";}"

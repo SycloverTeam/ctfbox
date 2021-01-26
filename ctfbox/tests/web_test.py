@@ -32,6 +32,12 @@ class TestWeb(unittest.TestCase):
         self.assertEqual('123456.00', d['password'])
 
         # diff_len = 5
+        class User(object):
+            def __init__(self, username, password):
+                self.username = username
+                self.password = password
+                self.sign = 'hello'
+
         payload_dict = php_serialize_escape_s2l('x', 'yyyyyy', payload, True)
         u = User(payload_dict.get('insert_data'), '123456')
         s = serialize(u).replace(b'x', b'yyyyyy')

@@ -290,3 +290,23 @@ def od_parse(data: str) -> Dict[str, Union[str, list]]:
             asc_data += "%s %s " % (a, b)
             list_data += [a, b]
     return {"hex": hex_data.strip(), "ascii": asc_data.strip(), "list": list_data, "text": text}
+
+
+def rot_encode(data: str, n: int) -> str:
+    """rotate by custom places
+
+    Args:
+        data (str): data to be encoded
+        n (int): custom places
+
+    Returns:
+        str: Encoded data
+
+    Example:
+        rot_encode("aaa", 25) -> "zzz"
+    """
+    n = (26 - (-n % 26)) * 2
+    chars = "AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz"
+    trans = chars[n:]+chars[:n]
+    def rot_char(c): return trans[chars.find(c)] if chars.find(c) > -1 else c
+    return ''.join(rot_char(c) for c in data)

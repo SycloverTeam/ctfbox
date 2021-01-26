@@ -91,6 +91,11 @@ class TestUtils(unittest.TestCase):
 0000020 070137 071141 062563 005175
 0000030""")["text"], "Syclover{test_od_parse}\n")
 
+    def test_rot_encode(self):
+        self.assertEqual("zzz", rot_encode("aaa", 25))
+        self.assertEqual("bbbBBB", rot_encode("aaaAAA", 1))
+        self.assertEqual("Uryyb Jbeyq!", rot_encode("Hello World!", 13))
+
 
 if __name__ == '__main__':
     unittest.main()

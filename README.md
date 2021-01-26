@@ -163,6 +163,7 @@ Syclover
    - [F4ded](https://github.com/F4ded)
    - [lingze](https://github.com/wlingze)
    - [pjx](https://github.com/pjx206)
+   - [AFKL](https://github.com/AFKL-CUIT)
 
 Other
    - [Morouu](http://github.com/Morouu)

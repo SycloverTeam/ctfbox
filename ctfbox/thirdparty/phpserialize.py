@@ -553,7 +553,7 @@ def load(fp, charset='utf-8', errors=default_errors, decode_strings=False,
 
 
 def loads(data, charset='utf-8', errors=default_errors, decode_strings=False,
-          object_hook=None, array_hook=None, return_unicode=False):
+          object_hook=phpobject, array_hook=None, return_unicode=False):
     """Read a PHP-serialized object hierarchy from a string.  Characters in the
     string past the object's representation are ignored.  On Python 3 the
     string must be a bytestring.

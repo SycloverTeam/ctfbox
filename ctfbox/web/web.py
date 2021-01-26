@@ -64,7 +64,7 @@ def _parse_form_data(body):
         file_lines = lines[start:end]
         split_index = file_lines.index(b'')
         file_headers = file_lines[1:split_index]
-        file_bodys = file_lines[split_index+1:end]
+        file_bodys = file_lines[split_index + 1:end]
         header = file_headers[0]
         content_type = ""
 
@@ -232,7 +232,8 @@ def flask_session_decode(session_data: str, secret_key: str) -> dict:
         raise FlaskSessionHelperError("Deocde error") from e
 
 
-def provide(host: str = "0.0.0.0", port: int = 2005, isasync: bool = False,  files: List[Tuple[Union[filepath, content], routePath, contentType]] = {}):
+def provide(host: str = "0.0.0.0", port: int = 2005, isasync: bool = False,
+            files: List[Tuple[Union[filepath, content], routePath, contentType]] = {}):
     """A simple and customizable http server.
 
     Args:
@@ -274,7 +275,8 @@ def provide(host: str = "0.0.0.0", port: int = 2005, isasync: bool = False,  fil
             server.shutdown()
 
 
-def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange: int = 1000000, threadNum: int = 25, hashType: HashType = HashType.MD5) -> str:
+def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange: int = 1000000, threadNum: int = 25,
+             hashType: HashType = HashType.MD5) -> str:
     """A function used to blast the first few bits of the hash, often used to crack the ctf verification code.
 
     Args:
@@ -317,6 +319,7 @@ def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange:
     i = iter(range(maxRange))
     context = Context()
     hashfunc = HASHTYPE_DICT[hashType]
+
     @Threader(threadNum)
     def run(context):
         while context.value is None:
@@ -328,6 +331,7 @@ def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange:
                 context.value = True
                 return guess
         return -1
+
     tasks = [run(context) for _ in range(threadNum)]
 
     for task in tasks:
@@ -458,7 +462,7 @@ def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
                   )
 
 
-def gopherraw(raw: str, host: str = "",  ssrfFlag: bool = True) -> str:
+def gopherraw(raw: str, host: str = "", ssrfFlag: bool = True) -> str:
     """Generate gopher requests URL form a raw http request
 
     Args:
@@ -508,7 +512,7 @@ def gopherraw(raw: str, host: str = "",  ssrfFlag: bool = True) -> str:
     return header + data
 
 
-def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False) -> Tuple[str, int]:
+def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False) -> str:
     """
     Use for generate short to long php unserialize escape attack payload
     Tips:
@@ -522,9 +526,7 @@ def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: boo
 
 
     Returns:
-        Tuple: tuple[str, int]
-        tuple[0](str): generated payload
-        tuple[1](int): length of the generated payload
+        str: generated payload
 
     Example:
         php_serialize_escape_s2l("x", "yy", '''s:8:"password";s:6:"123456"''')
@@ -542,48 +544,65 @@ def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: boo
         payload = trush + payload
     payload = '";' + payload + ";}"
     result = src * padding_len + payload
-    return result, len(result)
+    return result
 
 
-def php_serialize_escape_l2s(src: str, dst: str, disString: str, payload: str, paddingTrush: bool = False) -> Tuple[str, int]:
+def php_serialize_escape_l2s(src: str, dst: str, payload: str, paddingTrush: bool = False) -> str:
     """
     Use for generate long to short php unserialize escape attack payload
+
     Tips:
         - only for php class unserialize
+
     Args:
         src(str): search string
         dst(str): replace string, this length must be shorter than search
-        disString(str): The php serialize data to be swallowed
         payload(str): the php serialize data you want to insert
         paddingTrush (bool, optional): only for payload length error, it will try to padding trush in payload. Defaults to False.
+
     Returns:
-        Tuple: tuple[str, int]
-        tuple[0](str): generated payload
-        tuple[1](int): length of the generated payload
+        str: To be precise a dictionary, it will return the populoate_data, insert_data and trash_data.
 
     Example:
-        print(php_serialize_escape_l2s('aaaa', 'bb', 's:6:"passwd";s:5:"test1"', 's:6:"passwd";s:6:"123456"', True))
+        php_serialize_escape_l2s("yy", "x", '''s:8:"password";s:6:"123456"''')
     """
+    eatString = "\";" + payload.split(';')[0] + f';s:{len(payload) + 4}:"'
+    # ": + payload + ;} --> len(payload) + 4
     diff_len = len(src) - len(dst)
     if diff_len <= 0:
-        raise GeneratePayloadError(
-            "src length must be greater than dst")
+        raise GeneratePayloadError("src length must be greater than dst")
 
-    padding_len, remain = divmod(len(disString) + 1, diff_len)
+    padding_len, remain = divmod(len(eatString), diff_len)
 
+    # There is no remainder
     if remain == 0:
-        result = (src * padding_len) + "\";" + \
-            disString + ";" + payload + ";}"
-        return result, len(src * padding_len)
+        print('There is no remainder')
+        populate_data = padding_len * src
+        insert_data = "\";" + payload + ";}"
+
+        result = {
+            'populoate_data': populate_data,
+            'insert_data': insert_data
+        }
+
+        return json.dumps(result, indent=4).replace("\"", "'").replace("\\'", "\"")
+
+    # If there is a remainder, then pad trash data into the payload
     if not paddingTrush:
-        raise GeneratePayloadError("Payload length error")
+        raise GeneratePayloadError(
+            "payload length error, try modify it, maybe you can put {paddingTrush=True} into the function")
 
-    trash_data = _generateTrush(diff_len, remain)[1]
-    trash_data += disString
-    padding_len, remain = divmod(len(trash_data) + 1, diff_len)
+    print('There is a remainder, the function will pad trash data into the payload to fix the length error')
 
-    if remain != 0:
-        raise GeneratePayloadError("Payload length Error")
+    for i in range(100):
+        padding_len, remain = divmod(len(eatString + (i * '@')), diff_len)
+        if remain == 0:
+            populate_data = padding_len * src
+            insert_data_with_trash = (i * '@') + "\";" + payload + ";}"
 
-    result = (src * padding_len) + "\";" + trash_data + ";" + payload + ";}"
-    return result, len(src * padding_len)
+            result = {
+                'populate_data': populate_data,
+                'trash_data': (i * '@'),
+                'insert_data_with_trash': insert_data_with_trash
+            }
+            return json.dumps(result, indent=4).replace("\"", "'").replace("\\'", "\"")

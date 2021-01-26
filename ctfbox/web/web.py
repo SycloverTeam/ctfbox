@@ -12,7 +12,7 @@ from hashlib import md5
 import requests
 from ctfbox.exceptions import (FlaskSessionHelperError, HashAuthArgumentError,
                                ProvideArgumentError, GeneratePayloadError)
-from ctfbox.utils import random_string, _Context, _ProvideHandler, Threader
+from ctfbox.utils import random_string, Context, ProvideHandler, Threader
 from ctfbox.utils import md5 as _md5
 from ctfbox.utils import sha1, sha256, sha512
 
@@ -260,7 +260,7 @@ def provide(host: str = "0.0.0.0", port: int = 2005, isasync: bool = False,  fil
             files = [files]
     else:
         raise ProvideArgumentError("files type must be list")
-    handler = partial(_ProvideHandler, files)
+    handler = partial(ProvideHandler, files)
     server = HTTPServer((host, port), handler)
     print(f"Listen on {host}: {port} ...")
     if isasync:
@@ -315,7 +315,7 @@ def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange:
         else:
             raise HashAuthArgumentError("Hash length error")
     i = iter(range(maxRange))
-    context = _Context()
+    context = Context()
     hashfunc = HASHTYPE_DICT[hashType]
     @Threader(threadNum)
     def run(context):

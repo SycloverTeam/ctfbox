@@ -18,7 +18,7 @@ def analysis(filepath: str) -> list:
                 else:
                     endIndex = -2
                 name = line[line.index(" ")+1:endIndex]
-            if "=" in name:
+            elif "=" in line:
                 name = line[:line.index("=")].strip()
                 if not name.isupper():
                     name = ""

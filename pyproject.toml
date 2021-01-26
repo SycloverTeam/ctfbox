@@ -8,6 +8,7 @@ authors = [
     "pjx <pjx3231@163.com>",
     "lingze <lingze.wl@gmail.com>",
     "F4ded <452584023@qq.com>",
+    "AFKL <afkl1919@qq.com>",
 ]
 dependencies = [
     "requests<3.0.0,>=2.25.1",

@@ -31,6 +31,6 @@ def analysis(global_dict: dict, allowed_modules: list) -> list:
     return result
 
 
-analysis(globals(), ["utils", "web", "reverse", "misc", "crypto"])
+__all__ = analysis(globals(), ["utils", "web", "reverse", "misc", "crypto"])
 
 del analysis

@@ -6,6 +6,7 @@ from ctfbox.web import *
 from ctfbox.reverse import *
 from ctfbox.misc import *
 from ctfbox.crypto import *
+from ctfbox.thirdparty.phpserialize import *
 # for dev
 try:
     from icecream import ic as _ic
@@ -31,6 +32,11 @@ def analysis(global_dict: dict, allowed_modules: list) -> list:
     return result
 
 
-__all__ = analysis(globals(), ["ctfbox.utils.utils", "ctfbox.web.web", "ctfbox.reverse.reverse", "ctfbox.misc.misc", "ctfbox.crypto.crypto"])
+__all__ = analysis(globals(), ["ctfbox.utils.utils",
+                               "ctfbox.web.web",
+                               "ctfbox.reverse.reverse",
+                               "ctfbox.misc.misc",
+                               "ctfbox.crypto.crypto",
+                               "ctfbox.thirdparty.phpserialize"])
 
 del analysis

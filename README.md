@@ -95,6 +95,19 @@ Some functions with names similar to PHP, close to intuition
    ```
    Generate gopher requests URL form a raw http request
    ```
+- phpserialize
+   for more information, please check docstring and [here](https://github.com/mitsuhiko/phpserialize)
+   - serialize(data, charset='utf-8', errors=default_errors, object_hook=None)
+      ```
+      The realization of php serialize in python
+      ```
+   - unserialize(data, charset='utf-8',errors=default_errors,decode_strings=False,object_hook=None,array_hook=None, return_unicode=False)
+      ```
+      The realization of php unserialize in python
+      ```
+   - serialize_to_file(...)
+   - unserialize_from_file(...)
+   - ...
 
 ### REVERSE
 please refer to source code for function's signatures and usages
@@ -174,6 +187,7 @@ Other
 - add __all__ for limit export
 - add some functions:
     - rot_encode
+    - thirdparty: phpserialize([Origin](https://github.com/mitsuhiko/phpserialize))
 
 ### 1.3.0
 - refactor project structure

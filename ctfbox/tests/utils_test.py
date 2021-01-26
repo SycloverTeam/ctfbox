@@ -58,7 +58,8 @@ class TestUtils(unittest.TestCase):
     def test_jwt_decode(self):
         token_test = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ'
         self.assertTrue(
-            b'{"alg":"HS256","typ":"JWT"}-{"sub":"1234567890","name":"John Doe","iat":1516239022}', jwt_decode(token_test))
+            b'{"alg":"HS256","typ":"JWT"}-{"sub":"1234567890","name":"John Doe","iat":1516239022}',
+            jwt_decode(token_test))
 
         token_test = 'eyJhbGciOiJOb25lIiwidHlwIjoiSldUIn0.eyJ0ZXN0IjoiZXhhbXBsZSJ9'
         self.assertTrue(

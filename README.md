@@ -70,8 +70,8 @@ Some functions with names similar to PHP, close to intuition
   - flask_session_encode(secret_key: str, payload: dict) -> str
   - flask_session_decode(session_data: str, secret_key: str) -> dict
 - php_serialize_escape_helper
-  - php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False) -> str
-  - php_serialize_escape_l2s(src: str, dst: str, payload: str, paddingTrush: bool = False) -> str
+  - php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict
+  - php_serialize_escape_l2s(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict
 - provide(host: str = "0.0.0.0", port: int = 2005, isasync: bool = False, files: List[Tuple[Union[filepath, content], routePath, contentType]] = {})
    ```
    A simple and customizable http server.

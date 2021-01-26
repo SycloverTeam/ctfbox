@@ -50,6 +50,7 @@ Some functions with names similar to PHP, close to intuition
 - json_decode(data) -> str
 - jwt_decode(token: str) -> bytes
 - jwt_encode(header: dict, payload: dict, key=None, algorithm=None) -> str
+- rot_encode(data: str, n: int) -> str
 - sha1(s: str, encoding='utf-8') -> str
 - sha256(s: str, encoding='utf-8') -> str
 - md5(s: str, encoding='utf-8') -> str
@@ -170,6 +171,8 @@ Other
 
 ### 1.3.1(TODO)
 - add __all__ for limit export
+- add some functions:
+    - rot_encode
 
 ### 1.3.0
 - refactor project structure

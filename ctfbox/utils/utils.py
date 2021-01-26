@@ -22,7 +22,7 @@ import jwt
 DEFAULT_ALPHABET = list(ascii_lowercase + digits)
 
 
-class Context:
+class _Context:
     def __init__(self, value=None):
         self.value = value
 
@@ -85,7 +85,7 @@ def Threader(number: int, timeout: int = None, retry: int = 2):
     return decorator
 
 
-class ProvideHandler(BaseHTTPRequestHandler):
+class _ProvideHandler(BaseHTTPRequestHandler):
 
     def __init__(self, ServeFiles, *args, **kwargs):
         self.serveFiles = ServeFiles

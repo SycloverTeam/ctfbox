@@ -12,7 +12,7 @@ from hashlib import md5
 import requests
 from ctfbox.exceptions import (FlaskSessionHelperError, HashAuthArgumentError,
                                ProvideArgumentError, GeneratePayloadError)
-from ctfbox.utils import random_string, Context, ProvideHandler, Threader
+from ctfbox.utils import random_string, _Context, _ProvideHandler, Threader
 from ctfbox.utils import md5 as _md5
 from ctfbox.utils import sha1, sha256, sha512
 
@@ -160,7 +160,7 @@ def get_flask_pin(username: str, absRootPath: str, macAddress: str, machineId: s
     return rv
 
 
-class App:
+class _App:
     def __init__(self, secret_key: str):
         self.secret_key = secret_key
 
@@ -192,7 +192,7 @@ def flask_session_encode(secret_key: str, payload: dict) -> str:
             "Please install moudle flask. e.g. python3 -m pip install flask")
     from flask.sessions import SecureCookieSessionInterface
     try:
-        app = App(secret_key)
+        app = _App(secret_key)
         scsi = SecureCookieSessionInterface()
         s = scsi.get_signing_serializer(app)
         return s.dumps(payload)
@@ -224,7 +224,7 @@ def flask_session_decode(session_data: str, secret_key: str) -> dict:
             "Please install moudle flask. e.g. python3 -m pip install flask")
     from flask.sessions import SecureCookieSessionInterface
     try:
-        app = App(secret_key)
+        app = _App(secret_key)
         scsi = SecureCookieSessionInterface()
         s = scsi.get_signing_serializer(app)
         return s.loads(session_data)
@@ -260,7 +260,7 @@ def provide(host: str = "0.0.0.0", port: int = 2005, isasync: bool = False,  fil
             files = [files]
     else:
         raise ProvideArgumentError("files type must be list")
-    handler = partial(ProvideHandler, files)
+    handler = partial(_ProvideHandler, files)
     server = HTTPServer((host, port), handler)
     print(f"Listen on {host}: {port} ...")
     if isasync:
@@ -315,7 +315,7 @@ def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange:
         else:
             raise HashAuthArgumentError("Hash length error")
     i = iter(range(maxRange))
-    context = Context()
+    context = _Context()
     hashfunc = HASHTYPE_DICT[hashType]
     @Threader(threadNum)
     def run(context):

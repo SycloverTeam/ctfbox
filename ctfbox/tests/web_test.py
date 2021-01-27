@@ -4,6 +4,13 @@ from ctfbox.thirdparty.phpserialize import serialize, unserialize
 
 
 class TestWeb(unittest.TestCase):
+
+    def test_hashAuth(self):
+        self.assertEqual(hashAuth(answer="02fcf"), "16221")
+        self.assertEqual(hashAuth(answer="d13ce", hashType=HashType.SHA1), "16221")
+        self.assertEqual(hashAuth(answer="c907773", endIndex=7, threadNum=50), "500000")
+        self.assertEqual(hashAuth(answer="59e711d", endIndex=7, maxRange=2000000), "1000001")
+
     def test_get_flask_pin(self):
         self.assertEqual(get_flask_pin("kingkk", "/home/kingkk/.local/lib/python3.5/site-packages/flask/app.py",
                                        "00:0c:29:e5:45:6a", "19949f18ce36422da1402b3e3fe53008"), "169-851-075")

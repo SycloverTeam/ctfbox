@@ -194,9 +194,10 @@ Other
         - docstring about encode is error
         - encode arugment not work
     - md5
-        - can't import
+        - **can't import**
     - hashAuth
-        - can't work
+        - **can't work**
+        - return type incorrect
 ### 1.4.0
 - add __all__ for limit export
 - add some functions:

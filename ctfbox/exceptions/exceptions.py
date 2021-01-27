@@ -17,3 +17,7 @@ class HashAuthArgumentError(CtfboxError):
 
 class GeneratePayloadError(CtfboxError):
     pass
+
+
+class HttprawError(CtfboxError):
+    pass

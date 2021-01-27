@@ -11,7 +11,7 @@ from hashlib import md5
 
 import requests
 from ctfbox.exceptions import (FlaskSessionHelperError, HashAuthArgumentError,
-                               ProvideArgumentError, GeneratePayloadError)
+                               ProvideArgumentError, GeneratePayloadError, HttprawError)
 from ctfbox.utils import random_string, Context, ProvideHandler, Threader
 from ctfbox.utils import md5 as _md5
 from ctfbox.utils import sha1, sha256, sha512
@@ -48,7 +48,8 @@ class SoapClient(object):
             new_headers["Content-Type"] = "application/x-www-form-urlencoded"
         new_headers.update(headers)
         new_headers["Content-Length"] = len(post_data)
-        headers_string = "\r\n".join(f"{k}: {v}" for k, v in new_headers.items())
+        headers_string = "\r\n".join(
+            f"{k}: {v}" for k, v in new_headers.items())
         self._user_agent = f"""{user_agent}\r\n{headers_string}\r\n\r\n{post_data}"""
         self._soap_version = 1
 
@@ -362,17 +363,22 @@ def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange:
         return task.result
 
 
-def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
+def httpraw(raw: Union[bytes, str], **kwargs) -> Union[requests.Response, requests.Request]:
     """Send raw request by python-requests
 
-   Args:
+    Args:
     raw(bytes/str): raw http request
     kwargs:
-        proxies(dict) : requests proxies
-        timeout(float): requests timeout
-        verify(bool)  : requests verify
-        real_host(str): use real host instead of Host if set
-        ssl(bool)     : whether https
+        proxies(dict) : requests proxies. Defaults to None.
+        timeout(float): requests timeout. Defaults to 60.
+        verify(bool)  : requests verify. Defaults to True.
+        real_host(str): use real host instead of Host if set.
+        ssl(bool)     : whether https. Defaults to False.
+        session(bool) : use this session instead of new session.
+        send(bool)    : whether to send the request. Defaults to True.
+
+    Raises:
+        HttprawError
 
     Returns:
         requests.Response: the requests response
@@ -381,6 +387,8 @@ def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
         raw = raw.encode()
     # ? Origin: https://github.com/boy-hack/hack-requests
     raw = raw.strip()
+    send = kwargs.get("send", True)
+    session = kwargs.get("session", None)
     proxies = kwargs.get("proxy", None)
     timeout = kwargs.get("timeout", 60.0)
     verify = kwargs.get("verify", True)
@@ -437,7 +445,6 @@ def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
             v = ""
         headers[k.decode()] = v.decode()
         index += 1
-    headers["Connection"] = "close"
     # ? get body
     if len(raws) < index + 1:
         body = b''
@@ -445,41 +452,52 @@ def httpraw(raw: Union[bytes, str], **kwargs) -> requests.Response:
         body = b'\n'.join(raws[index + 1:]).lstrip()
 
     # ? get url
-    url = f"{scheme}://{host.decode()}:{port.decode()}/{path.decode()}"
+    port = port.decode()
+    if (port == "80" and scheme == "http") or (port == "443" and scheme == "https"):
+        url = f"{scheme}://{host.decode()}{path.decode()}"
+    else:
+        url = f"{scheme}://{host.decode()}:{port}{path.decode()}"
     # ? get content-length
-    if body and "Content-Length" not in headers and "Transfer-Encoding" not in headers:
-        headers["Content-Length"] = str(len(body))
+    # ? let requests to count it
     # ? deal with chunked
     if body and headers.get("Transfer-Encoding", '').lower() == "chunked":
         body = body.replace('\r\n', '\n')
         body = body.replace('\n', '\r\n')
         body = body + "\r\n" * 2
-    # ? deal with Content-Type
 
-    # ? deal with body
+    # ? deal with Content-Type and body
     parse_dict = {"files": {}, "data": {}}
-    if "Content-Type" not in headers:
-        headers["Content-Type"] = "application/x-www-form-urlencoded"
-    elif _is_json(body) and headers["Content-Type"] not in ["application/json", "multipart/form-data"]:
-        headers["Content-Type"] = "application/json"
-    if headers["Content-Type"] == "application/x-www-form-urlencoded":
-        body = dict([l.split(b"=")
-                     for l in body.strip().split(b"&") if b"=" in l])
-        body = {k.strip().decode(): v.strip().decode()
-                for k, v in body.items()}
-    elif headers["Content-Type"] == "multipart/form-data":
-        parse_dict = _parse_form_data(body)
-        body = parse_dict["data"]
+    if method.upper() == b"POST":
+        if "Content-Type" not in headers:
+            headers["Content-Type"] = "application/x-www-form-urlencoded"
+        if _is_json(body) and headers["Content-Type"] not in ["application/json", "multipart/form-data"]:
+            headers["Content-Type"] = "application/json"
+        if headers["Content-Type"] == "application/x-www-form-urlencoded":
+            body = dict([l.split(b"=")
+                        for l in body.strip().split(b"&") if b"=" in l])
+            body = {k.strip().decode(): v.strip().decode()
+                    for k, v in body.items()}
+        elif "multipart/form-data" in headers["Content-Type"]:
+            parse_dict = _parse_form_data(body)
+            body = parse_dict["data"]
+            del headers["Content-Type"]  # ? let requests to set Content-Type
 
     # ? prepare request
-    s = requests.Session()
-    req = requests.Request(method, url, data=body, files=parse_dict["files"])
+    if session:
+        if not isinstance(session, requests.Session):
+            raise HttprawError("Session invalid")
+    else:
+        session = requests.Session()
+    req = requests.Request(method, url, data=body, headers=headers, files=parse_dict["files"])
     prepped = req.prepare()
-    return s.send(prepped,
-                  proxies=proxies,
-                  timeout=timeout,
-                  verify=verify,
-                  )
+    if send:
+        return session.send(prepped,
+                            proxies=proxies,
+                            timeout=timeout,
+                            verify=verify,
+                            )
+    else:
+        return req
 
 
 def gopherraw(raw: str, host: str = "", ssrfFlag: bool = True) -> str:
@@ -532,7 +550,6 @@ def gopherraw(raw: str, host: str = "", ssrfFlag: bool = True) -> str:
     return header + data
 
 
-
 def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict:
     """
     Use for generate short to long php unserialize escape attack payload
@@ -560,7 +577,8 @@ def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: boo
     padding_len, remain = divmod(len(payload) + 4, diff_len)
     if remain != 0:
         if not paddingTrush:
-            raise GeneratePayloadError("payload length error, try modify it, maybe you can put {paddingTrush=True} into the function")
+            raise GeneratePayloadError(
+                "payload length error, try modify it, maybe you can put {paddingTrush=True} into the function")
         k, trush = _generateTrash(diff_len, remain)
         padding_len += k
         payload = trush + payload

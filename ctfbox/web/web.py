@@ -7,13 +7,12 @@ from json import loads
 from threading import Thread
 from typing import Union, List, Tuple, Dict
 from urllib.parse import quote, quote_plus
-from hashlib import md5
+from hashlib import md5 as _md5
 
 import requests
 from ctfbox.exceptions import (FlaskSessionHelperError, HashAuthArgumentError,
                                ProvideArgumentError, GeneratePayloadError, HttprawError)
 from ctfbox.utils import random_string, Context, ProvideHandler, Threader
-from ctfbox.utils import md5 as _md5
 from ctfbox.utils import sha1, sha256, sha512
 from ctfbox.thirdparty.phpserialize import serialize
 
@@ -356,10 +355,8 @@ def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange:
     tasks = [run(context) for _ in range(threadNum)]
 
     for task in tasks:
-        if task.result == -1:
+        if task.result == -1 or not task.result:
             continue
-        pool = task.pool
-        pool.shutdown(wait=False)
         return task.result
 
 
@@ -662,7 +659,7 @@ def soapclient_ssrf(url: str, user_agent: str = "Syclover", headers: Dict[str, s
         user_agent (str, optional): the user agent. Defaults to "Syclover".
         headers (Dict[str, str], optional): ohter headers. Defaults to {}.
         post_data (str, optional): the data you want to post. Defaults to "".
-        encode (bool, optional): whether to encode payload. Defaults to False.
+        encode (bool, optional): whether to encode payload. Defaults to True.
 
     Returns:
         Union[str, bytes]: generated payload
@@ -675,4 +672,7 @@ def soapclient_ssrf(url: str, user_agent: str = "Syclover", headers: Dict[str, s
         s = s.decode()
     except UnicodeDecodeError:
         pass
-    return quote_plus(s)
+    if encode:
+        return quote_plus(s)
+    else:
+        return s

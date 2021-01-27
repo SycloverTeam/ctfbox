@@ -516,7 +516,7 @@ def gopherraw(raw: str, host: str = "", ssrfFlag: bool = True) -> str:
         if len(row) > 0 and row[-1] == "\r":
             data += quote(row + "\n")
         else:
-            data += quote("\r\n" + row)
+            data += quote(row + "\r\n")
 
         header = row.lower().strip()
         if header.startswith("host:"):
@@ -530,6 +530,7 @@ def gopherraw(raw: str, host: str = "", ssrfFlag: bool = True) -> str:
     if ssrfFlag:
         return quote(header + data)
     return header + data
+
 
 
 def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict:

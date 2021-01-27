@@ -80,7 +80,7 @@ Some functions with names similar to PHP, close to intuition
    ```
    A function used to blast the first few bits of the hash, often used to crack the ctf verification code
    ```
-- httpraw(raw: Union[bytes, str], **kwargs -> requests.Response)
+- httpraw(raw: Union[bytes, str], **kwargs) -> Union[requests.Response, requests.Request]
    ```
    Send raw request by python-requests
    
@@ -98,6 +98,7 @@ Some functions with names similar to PHP, close to intuition
    Generate gopher requests URL form a raw http request
    ```
 - phpserialize
+
    for more information, please check docstring and [here](https://github.com/mitsuhiko/phpserialize)
    - serialize(data, charset='utf-8', errors=default_errors, object_hook=None)
       ```
@@ -187,6 +188,15 @@ Other
 
 ## Logs
 
+### 1.4.1(TODO)
+- fix bugs:
+    - soapclient_ssrf
+        - docstring about encode is error
+        - encode arugment not work
+    - md5
+        - can't import
+    - hashAuth
+        - can't work
 ### 1.4.0
 - add __all__ for limit export
 - add some functions:

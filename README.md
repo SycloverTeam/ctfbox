@@ -100,11 +100,11 @@ Some functions with names similar to PHP, close to intuition
 - phpserialize
 
    for more information, please check docstring and [here](https://github.com/mitsuhiko/phpserialize)
-   - serialize(data, charset='utf-8', errors=default_errors, object_hook=None)
+   - serialize(data, charset='utf-8', errors=default_errors, object_hook=phpobject)
       ```
       The realization of php serialize in python
       ```
-   - unserialize(data, charset='utf-8',errors=default_errors,decode_strings=False,object_hook=None,array_hook=None, return_unicode=False)
+   - unserialize(data, charset='utf-8',errors=default_errors,decode_strings=False,object_hook=phpobject,array_hook=None, return_unicode=False)
       ```
       The realization of php unserialize in python
       ```
@@ -188,7 +188,15 @@ Other
 
 ## Logs
 
-### 1.4.1(TODO)
+### 1.4.2
+- fix bugs:
+    - Threader
+        - retry can't work
+- update some functions:
+    - Threader
+        - add docstring
+        - add task attributes: traceback
+### 1.4.1
 - fix bugs:
     - soapclient_ssrf
         - docstring about encode is error

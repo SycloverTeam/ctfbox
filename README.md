@@ -112,6 +112,19 @@ Some functions with names similar to PHP, close to intuition
    - unserialize_from_file(...)
    - ...
 - soapclient_ssrf(url, user_agent: str = "", headers: Dict[str, str] = {}, post_data: str = "") -> Union[str, bytes]
+   ```
+   Generate php soapClient class payload for ssrf
+   ```
+- network scan
+  - scan(url: str, scanList: list = [], filepath: str = "", show: bool = True, timeout: int = 60, threadNum: int = 25,) -> list
+      ```
+      Scan for find existing network path
+      ```
+  - bak_scan(url: str)
+- reshell(ip: str, port: Union[str, int], tp: str = "bash") -> str
+   ```
+   Generate reverse shell command
+   ```
 
 
 ### REVERSE
@@ -187,6 +200,12 @@ Other
    - [Morouu](http://github.com/Morouu)
 
 ## Logs
+
+### 1.5.0
+- add some functions:
+    - scan
+    - bak_scan
+    - reshell
 
 ### 1.4.2
 - fix bugs:

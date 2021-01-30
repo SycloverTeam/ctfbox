@@ -125,6 +125,8 @@ Some functions with names similar to PHP, close to intuition
    ```
    Generate reverse shell command
    ```
+- OOB(showDomain: bool = True, debug: bool = False) -> iterable:
+
 
 
 ### REVERSE
@@ -208,7 +210,8 @@ Other
     - reshell
     - OOB
 - add dependencies: 
-    - python-socketio
+    - python-socketio[client]==4.6.0
+    - python-engineio==3.14.2
 
 ### 1.4.2
 - fix bugs:

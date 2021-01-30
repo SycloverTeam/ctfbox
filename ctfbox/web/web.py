@@ -11,7 +11,7 @@ from math import ceil
 from os import path
 from queue import Queue
 from re import match
-from threading import Thread
+from threading import Thread, Lock
 from time import time
 from typing import Dict, List, Tuple, Union
 from urllib.parse import quote, quote_plus, urljoin
@@ -795,33 +795,40 @@ class OOB():
     """An auxiliary class for oob, You can iterate it directly to get the data.
 
     Args:
-        debug (bool, optional): whether debug mode is enabled
+        showDomain(bool, optional): whether to show domain. Defaults to True.
+        debug (bool, optional): whether debug mode is enabled. Default to False.
 
     Returns:
-        iterator: An iterator that can be used to get data
+        iterable: An iterator that can be used to get data
 
     Note:
         power by socket.io and dnslog.io
 
     Example:
         oob = OOB()
+        domain = oob.domain # get domain
         for data in oob:
             print(data)
 
     """
-    def __init__(self, debug=False):
+
+    def __init__(self, showDomain: bool = True, debug: bool = False):
         sio = socketio.Client()
         self.sio = sio
         self._queue = Queue()
-        self.debug = debug
+        self._debug = debug
         self._unique = []
+        self._showDomain = showDomain
         self._updateTime = time()
+        self._domainlock = Lock()
+        self._domainlock.acquire()
 
         @sio.on("randomDomain")
         def randomDomain(data):
             domain = data["domain"]
-            print('DnsLog domain:', domain)
+            self._showDomain and print('DnsLog domain:', domain)
             self.domain = domain
+            self._domainlock.release()
 
         @sio.on("dnslog")
         def dnslog(data):
@@ -838,18 +845,15 @@ class OOB():
 
         @sio.event
         def connect():
-            if self.debug:
-                print("DnsLogClient connected")
+            self._debug and print("websocket connected")
 
         @sio.event
         def connect_error(data):
-            if self.debug:
-                print("DnsLogClient connection failed!")
+            self._debug and print("websocket connection failed")
 
         @sio.event
         def disconnect():
-            if self.debug:
-                print("DnsLogClient disconnect")
+            self._debug and print("websocket disconnect")
 
         sio.connect("https://dnslog.io/")
 
@@ -859,3 +863,11 @@ class OOB():
     def __next__(self):
         data = self._queue.get()
         return data
+
+    def __getattribute__(self, name):
+        if name == "domain":
+            self._domainlock.acquire()
+            domain = object.__getattribute__(self, "domain")
+            self._domainlock.release()
+            return domain
+        return object.__getattribute__(self, name)

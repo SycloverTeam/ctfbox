@@ -3,9 +3,9 @@ name = "asttokens"
 sections = ["dev"]
 version = "2.0.4"
 summary = "Annotate AST trees with source code positions"
-
-[package.dependencies]
-six = "*"
+dependencies = [
+    "six",
+]
 
 [[package]]
 name = "certifi"
@@ -36,12 +36,12 @@ name = "icecream"
 sections = ["dev"]
 version = "2.0.0"
 summary = "Inspect variables, expressions, and program execution with a single, simple function call."
-
-[package.dependencies]
-colorama = ">=0.3.9"
-pygments = ">=2.2.0"
-executing = ">=0.3.1"
-asttokens = ">=2.0.1"
+dependencies = [
+    "colorama>=0.3.9",
+    "pygments>=2.2.0",
+    "executing>=0.3.1",
+    "asttokens>=2.0.1",
+]
 
 [[package]]
 name = "idna"
@@ -62,20 +62,53 @@ version = "2.0.1"
 summary = "JSON Web Token implementation in Python"
 
 [[package]]
+name = "python-engineio"
+sections = ["default"]
+version = "3.14.2"
+summary = "Engine.IO server"
+dependencies = [
+    "six>=1.9.0",
+]
+
+[[package]]
+name = "python-socketio"
+sections = ["default"]
+version = "4.6.0"
+summary = "Socket.IO server"
+dependencies = [
+    "six>=1.9.0",
+    "python-engineio>=3.13.0",
+]
+
+[[package]]
+name = "python-socketio"
+sections = ["default"]
+version = "4.6.0"
+extras = ["client"]
+summary = "Socket.IO server"
+dependencies = [
+    "six>=1.9.0",
+    "python-engineio>=3.13.0",
+    "requests>=2.21.0",
+    "websocket-client>=0.54.0",
+    "python-socketio==4.6.0",
+]
+
+[[package]]
 name = "requests"
 sections = ["default"]
 version = "2.25.1"
 summary = "Python HTTP for Humans."
-
-[package.dependencies]
-chardet = "<5,>=3.0.2"
-idna = "<3,>=2.5"
-urllib3 = "<1.27,>=1.21.1"
-certifi = ">=2017.4.17"
+dependencies = [
+    "chardet<5,>=3.0.2",
+    "idna<3,>=2.5",
+    "urllib3<1.27,>=1.21.1",
+    "certifi>=2017.4.17",
+]
 
 [[package]]
 name = "six"
-sections = ["dev"]
+sections = ["default", "dev"]
 version = "1.15.0"
 summary = "Python 2 and 3 compatibility utilities"
 
@@ -85,9 +118,18 @@ sections = ["default"]
 version = "1.26.2"
 summary = "HTTP library with thread-safe connection pooling, file post, and more."
 
+[[package]]
+name = "websocket-client"
+sections = ["default"]
+version = "0.57.0"
+summary = "WebSocket client for Python. hybi13 is supported."
+dependencies = [
+    "six",
+]
+
 [metadata]
 lock_version = "2"
-content_hash = "sha256:afb1c2a8a5876e6a705050ec60034700310db7b4de670b14fcd4b88be35e28c9"
+content_hash = "sha256:34d9bd81b8ab00ee9d6bfa2ed719490abb33d06ad7fdd8870603edfe7b144840"
 
 [metadata.files]
 "asttokens 2.0.4" = [
@@ -126,6 +168,18 @@ content_hash = "sha256:afb1c2a8a5876e6a705050ec60034700310db7b4de670b14fcd4b88be
     {file = "PyJWT-2.0.1-py3-none-any.whl", hash = "sha256:b70b15f89dc69b993d8a8d32c299032d5355c82f9b5b7e851d1a6d706dffe847"},
     {file = "PyJWT-2.0.1.tar.gz", hash = "sha256:a5c70a06e1f33d81ef25eecd50d50bd30e34de1ca8b2b9fa3fe0daaabcf69bf7"},
 ]
+"python-engineio 3.14.2" = [
+    {file = "python_engineio-3.14.2-py2.py3-none-any.whl", hash = "sha256:5a9e6086d192463b04a1428ff1f85b6ba631bbb19d453b144ffc04f530542b84"},
+    {file = "python-engineio-3.14.2.tar.gz", hash = "sha256:eab4553f2804c1ce97054c8b22cf0d5a9ab23128075248b97e1a5b2f29553085"},
+]
+"python-socketio 4.6.0" = [
+    {file = "python_socketio-4.6.0-py2.py3-none-any.whl", hash = "sha256:d437f797c44b6efba2f201867cf02b8c96b97dff26d4e4281ac08b45817cd522"},
+    {file = "python-socketio-4.6.0.tar.gz", hash = "sha256:358d8fbbc029c4538ea25bcaa283e47f375be0017fcba829de8a3a731c9df25a"},
+]
+"python-socketio[client] 4.6.0" = [
+    {file = "python_socketio-4.6.0-py2.py3-none-any.whl", hash = "sha256:d437f797c44b6efba2f201867cf02b8c96b97dff26d4e4281ac08b45817cd522"},
+    {file = "python-socketio-4.6.0.tar.gz", hash = "sha256:358d8fbbc029c4538ea25bcaa283e47f375be0017fcba829de8a3a731c9df25a"},
+]
 "requests 2.25.1" = [
     {file = "requests-2.25.1-py2.py3-none-any.whl", hash = "sha256:c210084e36a42ae6b9219e00e48287def368a26d03a048ddad7bfee44f75871e"},
     {file = "requests-2.25.1.tar.gz", hash = "sha256:27973dd4a904a4f13b263a19c866c13b92a39ed1c964655f025f3f8d3d75b804"},
@@ -137,4 +191,8 @@ content_hash = "sha256:afb1c2a8a5876e6a705050ec60034700310db7b4de670b14fcd4b88be
 "urllib3 1.26.2" = [
     {file = "urllib3-1.26.2-py2.py3-none-any.whl", hash = "sha256:d8ff90d979214d7b4f8ce956e80f4028fc6860e4431f731ea4a8c08f23f99473"},
     {file = "urllib3-1.26.2.tar.gz", hash = "sha256:19188f96923873c92ccb987120ec4acaa12f0461fa9ce5d3d0772bc965a39e08"},
+]
+"websocket-client 0.57.0" = [
+    {file = "websocket_client-0.57.0-py2.py3-none-any.whl", hash = "sha256:0fc45c961324d79c781bab301359d5a1b00b13ad1b10415a4780229ef71a5549"},
+    {file = "websocket_client-0.57.0.tar.gz", hash = "sha256:d735b91d6d1692a6a181f2a8c9e0238e5f6373356f561bb9dc4c7af36f452010"},
 ]

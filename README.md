@@ -116,7 +116,7 @@ Some functions with names similar to PHP, close to intuition
    Generate php soapClient class payload for ssrf
    ```
 - network scan
-  - scan(url: str, scanList: list = [], filepath: str = "", show: bool = True, timeout: int = 60, threadNum: int = 25,) -> list
+  - scan(url: str, scanList: list = [], filepath: str = "", show: bool = True, timeout: int = 60, threadNum: int = 10) -> list
       ```
       Scan for find existing network path
       ```
@@ -206,6 +206,9 @@ Other
     - scan
     - bak_scan
     - reshell
+    - OOB
+- add dependencies: 
+    - python-socketio
 
 ### 1.4.2
 - fix bugs:

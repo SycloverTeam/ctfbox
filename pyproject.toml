@@ -1,6 +1,6 @@
 [project]
 name = "ctfbox"
-version = "1.3.0"
+version = "1.4.2"
 description = "A box for CTF challenges with some sugar functions, Just enjoy it"
 authors = [
     "Syclover <>",
@@ -8,10 +8,13 @@ authors = [
     "pjx <pjx3231@163.com>",
     "lingze <lingze.wl@gmail.com>",
     "F4ded <452584023@qq.com>",
+    "AFKL <afkl1919@qq.com>",
 ]
 dependencies = [
     "requests<3.0.0,>=2.25.1",
     "PyJWT<3.0.0,>=2.0.1",
+    "python-engineio==3.14.2",
+    "python-socketio[client]==4.6.0",
 ]
 dev-dependencies = [
     "icecream<3.0.0,>=2.0.0",

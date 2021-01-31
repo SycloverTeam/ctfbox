@@ -58,7 +58,8 @@ class TestUtils(unittest.TestCase):
     def test_jwt_decode(self):
         token_test = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ'
         self.assertTrue(
-            b'{"alg":"HS256","typ":"JWT"}-{"sub":"1234567890","name":"John Doe","iat":1516239022}', jwt_decode(token_test))
+            b'{"alg":"HS256","typ":"JWT"}-{"sub":"1234567890","name":"John Doe","iat":1516239022}',
+            jwt_decode(token_test))
 
         token_test = 'eyJhbGciOiJOb25lIiwidHlwIjoiSldUIn0.eyJ0ZXN0IjoiZXhhbXBsZSJ9'
         self.assertTrue(
@@ -90,6 +91,11 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(od_parse("""0000000 074523 066143 073157 071145 072173 071545 057564 062157
 0000020 070137 071141 062563 005175
 0000030""")["text"], "Syclover{test_od_parse}\n")
+
+    def test_rot_encode(self):
+        self.assertEqual("zzz", rot_encode("aaa", 25))
+        self.assertEqual("bbbBBB", rot_encode("aaaAAA", 1))
+        self.assertEqual("Uryyb Jbeyq!", rot_encode("Hello World!", 13))
 
 
 if __name__ == '__main__':

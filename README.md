@@ -38,99 +38,49 @@ from ctfbox import * # Will not import the pwn part, please check the PWN Usage 
 ### PWN
 [PWN Usage](#pwn-1)
 ## Functions
+Please refer to docstring for function's signatures and usages
 ### utils
 Some functions with names similar to PHP, close to intuition
-- url_encode(s: str, encoding: str = 'utf-8') -> str
-- url_decode(s: str, encoding: str = 'utf-8') -> str
-- base64_decode(s: str, encoding='utf-8') -> str
-- base64_encode(s: str, encoding='utf-8') -> str
-- bin2hex(s: str) -> str
-- hex2bin(s: str) -> str
-- json_encode(obj) -> object
-- json_decode(data) -> str
-- jwt_decode(token: str) -> bytes
-- jwt_encode(header: dict, payload: dict, key=None, algorithm=None) -> str
-- rot_encode(data: str, n: int) -> str
-- sha1(s: str, encoding='utf-8') -> str
-- sha256(s: str, encoding='utf-8') -> str
-- md5(s: str, encoding='utf-8') -> str
-- random_int(minN: int = 0, maxN: int = 1024) -> int
-- random_string(n: int = 32, alphabet: str = "") -> str
-- od_parse(data: str) -> Dict[str, Union[str, list]]
-- Threader(number: int, timeout: int = None, retry: int = 2)
-   ```
-    A simple decorator function that can decorate the function to make it multi-threaded.
-   ```
+- url: `url_encode()`, `url_decode()`
+- base64: `base64_encode()`, `base64_decode()`
+- json: `json_encode()`, `json_decode()`
+- hex: `bin2hex()`, `hex2bin()`
+- jwt: `jwt_encode()`, `jwt_decode()`
+- rot: `rot_encode()`
+- hash: `md5()`, `sha1()`, `sha256()`, `sha512()`
+- random: `random_int()`, `random_string()`
+- prase od command data: `od_parse()`
+- A decorator to make it multi-threaded: `Threader()`
+
   
 
 ### WEB
-- get_flask_pin(username: str,  absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app", appName: str = "Flask") -> str
-- flask_session_helper
+- generate flask pin: `get_flask_pin()`
+- generate flask session: `flask_session_encode()`, `flask_session_decode()`
 (***⚠️ There is no flask dependency in ctfbox itself, the following two functions need to install the dependency by yourself***)
-  - flask_session_encode(secret_key: str, payload: dict) -> str
-  - flask_session_decode(session_data: str, secret_key: str) -> dict
-- php_serialize_escape_helper
-  - php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict
-  - php_serialize_escape_l2s(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict
-- provide(host: str = "0.0.0.0", port: int = 2005, isasync: bool = False, files: List[Tuple[Union[filepath, content], routePath, contentType]] = {})
-   ```
-   A simple and customizable http server.
-   ```
-- hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange: int = 1000000, threadNum: int = 25, hashType: HashType = HashType.MD5) -> str
-   ```
-   A function used to blast the first few bits of the hash, often used to crack the ctf verification code
-   ```
-- httpraw(raw: Union[bytes, str], **kwargs) -> Union[requests.Response, requests.Request]
-   ```
-   Send raw request by python-requests
-   
-   Allow kwargs:
-      proxies(dict) : requests proxies. Defaults to None.
-      timeout(float): requests timeout. Defaults to 60.
-      verify(bool)  : requests verify. Defaults to True.
-      real_host(str): use real host instead of Host if set.
-      ssl(bool)     : whether https. Defaults to False.
-      session(bool) : use this session instead of new session.
-      send(bool)    : whether to send the request. Defaults to True.
-   ```
-- gopherraw(raw: str, host: str = "",  ssrfFlag: bool = False) -> str
-   ```
-   Generate gopher requests URL form a raw http request
-   ```
-- phpserialize
+- generate php serialize escape payload: `php_serialize_escape_s2l()`, `php_serialize_escape_l2s()`
+- provide a simple file server: `provide()`
+- burte force hash for ctf verification code: `hashAuth()`
+- Send raw request by python-requests: `httpraw()`
+- generate gopher reuqests: `gopherraw()`
+- php serialize
+   - `serialize()`
+   - `unserialize()`
+   - `serialize_to_file()`
+   - `unserialize_from_file()`
+   - ...
 
    for more information, please check docstring and [here](https://github.com/mitsuhiko/phpserialize)
-   - serialize(data, charset='utf-8', errors=default_errors, object_hook=phpobject)
-      ```
-      The realization of php serialize in python
-      ```
-   - unserialize(data, charset='utf-8',errors=default_errors,decode_strings=False,object_hook=phpobject,array_hook=None, return_unicode=False)
-      ```
-      The realization of php unserialize in python
-      ```
-   - serialize_to_file(...)
-   - unserialize_from_file(...)
-   - ...
-- soapclient_ssrf(url, user_agent: str = "", headers: Dict[str, str] = {}, post_data: str = "") -> Union[str, bytes]
-   ```
-   Generate php soapClient class payload for ssrf
-   ```
+- generate php soapClient class payload for ssrf: `soapclient_ssrf()`
 - network scan
-  - scan(url: str, scanList: list = [], filepath: str = "", show: bool = True, timeout: int = 60, threadNum: int = 10) -> list
-      ```
-      Scan for find existing network path
-      ```
-  - bak_scan(url: str)
-- reshell(ip: str, port: Union[str, int], tp: str = "bash") -> str
-   ```
-   Generate reverse shell command
-   ```
-- OOB(showDomain: bool = True, debug: bool = False) -> iterable:
+  - scan network path: `scan()`
+  - scan for network backup file: `bak_scan()`
+- generate reverse shell command: `reshell()`
+- use for out of band: `OOB()`
 
 
 
 ### REVERSE
-Please refer to source code for function's signatures and usages
 - print data in hex format: `printHex()`
 - pack number into bytes: `p16()`, `p32()`, `p64()`
 - unpack number from bytes: `u16()`, `u32()`, `u64()`

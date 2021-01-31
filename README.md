@@ -58,7 +58,7 @@ Some functions with names similar to PHP, close to intuition
 - generate flask pin: `get_flask_pin()`
 - generate flask session: `flask_session_encode()`, `flask_session_decode()`
 (***⚠️ There is no flask dependency in ctfbox itself, the following two functions need to install the dependency by yourself***)
-- generate php serialize escape payload: `php_serialize_escape_s2l()`, `php_serialize_escape_l2s()`
+- generate php serialize escape payload: `php_serialize_escape`, `php_serialize_escape_s2l()`, `php_serialize_escape_l2s()`
 - provide a simple file server: `provide()`
 - burte force hash for ctf verification code: `hashAuth()`
 - Send raw request by python-requests: `httpraw()`
@@ -86,8 +86,9 @@ Some functions with names similar to PHP, close to intuition
 - unpack number from bytes: `u16()`, `u32()`, `u64()`
 
 ### MISC
-Provide common file signatures and function to patch a file
+provide common file signatures and function to patch a file
 - patch file signature: `repair_fileheader()`
+
 
 ### PWN
 - Usage

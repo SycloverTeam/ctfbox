@@ -717,7 +717,7 @@ def scan(url: str, scanList: list = [], filepath: str = "", show: bool = True, t
             raise ScanError("File path invalid")
     else:
         it = iter(scanList)
-    queue = Queue()
+    result = []
 
     @Threader(threadNum)
     def run(host):
@@ -726,9 +726,9 @@ def scan(url: str, scanList: list = [], filepath: str = "", show: bool = True, t
                 url = urljoin(host, next(it).strip())
             except StopIteration:
                 break
-            res = requests.get(url, timeout=timeout)
+            res = requests.head(url, timeout=timeout)
             if 200 <= res.status_code < 400:
-                queue.put((res.status_code, url))
+                result.append((res.status_code, url))
                 if show:
                     print(url)
 
@@ -737,7 +737,7 @@ def scan(url: str, scanList: list = [], filepath: str = "", show: bool = True, t
     for task in tasks:
         _ = task.result
 
-    return list(queue.queue)
+    return result
 
 
 def bak_scan(url: str):

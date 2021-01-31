@@ -723,7 +723,7 @@ def scan(url: str, scanList: list = [], filepath: str = "", show: bool = True, t
     def run(host):
         while 1:
             try:
-                url = urljoin(host, next(it))
+                url = urljoin(host, next(it).strip())
             except StopIteration:
                 break
             res = requests.get(url, timeout=timeout)

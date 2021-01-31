@@ -705,34 +705,39 @@ def scan(url: str, scanList: list = [], filepath: str = "", show: bool = True, t
         list: existing network path
     """
     url = url.strip()
-
-    @Threader(threadNum)
-    def run(url) -> Tuple[int, str]:
-        res = requests.get(url, timeout=timeout)
-        return res.status_code, url
+    it = None
 
     if not match(r"^https?:/{2}\w.+$", url):
         raise ScanError("Url invalid")
 
     if filepath:
         if path.exists(filepath):
-            with open(filepath, 'r') as f:
-                scanList = f.readlines()
+            it = open(filepath, 'r')
         else:
             raise ScanError("File path invalid")
+    else:
+        it = iter(scanList)
+    queue = Queue()
 
-    tasks = [run(urljoin(url, p.strip())) for p in scanList]
-    results = []
-
-    for task in tasks:
-        result = task.result
-        if isinstance(result, tuple):
-            status_code, url = result
-            if 200 <= status_code < 300:
-                results.append(url)
+    @Threader(threadNum)
+    def run(host):
+        while 1:
+            try:
+                url = urljoin(host, next(it))
+            except StopIteration:
+                break
+            res = requests.get(url, timeout=timeout)
+            if 200 <= res.status_code < 400:
+                queue.put((res.status_code, url))
                 if show:
                     print(url)
-    return results
+
+    tasks = [run(url) for _ in range(threadNum)]
+
+    for task in tasks:
+        _ = task.result
+
+    return list(queue.queue)
 
 
 def bak_scan(url: str):
@@ -801,14 +806,18 @@ class OOB():
     Returns:
         iterable: An iterator that can be used to get data
 
+    Methods:
+        prepare(self, data) -> str  # prepare url which you can send with data
+
     Note:
         power by socket.io and dnslog.io
 
     Example:
-        oob = OOB()
-        domain = oob.domain # get domain
-        for data in oob:
-            print(data)
+        with OOB() as oob:
+            domain = oob.domain # get domain
+            requests.get(oob.prepare("test")) # send "test" and you will receive it
+            for data in oob:
+                print(data)
 
     """
 
@@ -871,3 +880,24 @@ class OOB():
             self._domainlock.release()
             return domain
         return object.__getattribute__(self, name)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, trace):
+        try:
+            self.sio.disconnect()
+        except Exception:
+            print("close socket.io failed")
+            return True
+
+    def prepare(self, data) -> str:
+        """prepare url which you can send with data
+
+        Args:
+            data (str): the data to send
+
+        Returns:
+            str: prepared url
+        """
+        return f"http://{data}.{self.domain}"

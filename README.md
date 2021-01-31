@@ -130,13 +130,14 @@ Some functions with names similar to PHP, close to intuition
 
 
 ### REVERSE
-please refer to source code for function's signatures and usages
+Please refer to source code for function's signatures and usages
 - print data in hex format: `printHex()`
 - pack number into bytes: `p16()`, `p32()`, `p64()`
 - unpack number from bytes: `u16()`, `u32()`, `u64()`
 
 ### MISC
-- TODO
+Provide common file signatures and function to patch a file
+- patch file signature: `repair_fileheader()`
 
 ### PWN
 - Usage

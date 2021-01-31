@@ -1,4 +1,6 @@
 """ Provide file header for common files
+
+use dir(CommonSig) to acquire availiable signatures
 """
 from enum import Enum
 import os

@@ -162,6 +162,7 @@ Other
     - bak_scan
     - reshell
     - OOB
+    - repair_fileheader
 - add dependencies: 
     - python-socketio[client]==4.6.0
     - python-engineio==3.14.2

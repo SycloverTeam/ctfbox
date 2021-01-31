@@ -189,17 +189,18 @@ please refer to source code for function's signatures and usages
 ## Depends
 - requests
 - PyJWT
-
+- python-socketio[client]==4.6.0
+   - python-engineio==3.14.2
 ## Contributors
 Syclover
-   - [Longlone](https://github.com/way29)
-   - [F4ded](https://github.com/F4ded)
-   - [lingze](https://github.com/wlingze)
-   - [pjx](https://github.com/pjx206)
-   - [AFKL](https://github.com/AFKL-CUIT)
+- [Longlone](https://github.com/way29)
+- [F4ded](https://github.com/F4ded)
+- [lingze](https://github.com/wlingze)
+- [pjx](https://github.com/pjx206)
+- [AFKL](https://github.com/AFKL-CUIT)
 
 Other
-   - [Morouu](http://github.com/Morouu)
+- [Morouu](http://github.com/Morouu)
 
 ## Logs
 

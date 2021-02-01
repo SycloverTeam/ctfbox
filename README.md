@@ -42,6 +42,9 @@ Please refer to docstring for function's signatures and usages
 ### utils
 Some functions with names similar to PHP, close to intuition
 - url: `url_encode()`, `url_decode()`
+- html: `html_encode()`, `html_decode()`
+- base16: `base16_encode()`, `base16_decode()`
+- base32: `base32_encode()`, `base32_decode()`
 - base64: `base64_encode()`, `base64_decode()`
 - json: `json_encode()`, `json_decode()`
 - hex: `bin2hex()`, `hex2bin()`
@@ -174,6 +177,7 @@ Other
     - gopherredis_msr
     - repair_fileheader
     - repair_zip_fake_encrypt
+    - base16_encode, base16_decode, base32_encode, base32_decode, html_encode, html_decode
 
 - add dependencies: 
     - python-socketio[client]==4.6.0

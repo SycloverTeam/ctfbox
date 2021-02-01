@@ -78,8 +78,11 @@ Some functions with names similar to PHP, close to intuition
 - generate reverse shell command: `reshell()`
 - use for out of band: `OOB()`
 - build a server for blindXXE: `blindXXE()`
-
-
+generate gopher payload for attack redis
+- write webshell: `gopherredis_webshell`
+- write crontab: `gopherredis_crontab`
+- ssh authorized keys: `gopherredis_ssh`
+- rce by master-slave replication: `gopherredis_msr`
 
 ### REVERSE
 - print data in hex format: `printHex()`
@@ -164,7 +167,12 @@ Other
     - reshell
     - OOB
     - blindXXE
+    - gopherredis_webshell
+    - gopherredis_crontab
+    - gopherredis_ssh
+    - gopherredis_msr
     - repair_fileheader
+
 - add dependencies: 
     - python-socketio[client]==4.6.0
     - python-engineio==3.14.2

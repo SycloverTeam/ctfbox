@@ -78,11 +78,11 @@ Some functions with names similar to PHP, close to intuition
 - generate reverse shell command: `reshell()`
 - use for out of band: `OOB()`
 - build a server for blindXXE: `blindXXE()`
-generate gopher payload for attack redis
-- write webshell: `gopherredis_webshell`
-- write crontab: `gopherredis_crontab`
-- ssh authorized keys: `gopherredis_ssh`
-- rce by master-slave replication: `gopherredis_msr`
+- generate gopher payload for attack redis
+  - write webshell: `gopherredis_webshell()`
+  - write crontab: `gopherredis_crontab()`
+  - ssh authorized keys: `gopherredis_ssh()`
+  - rce by master-slave replication: `gopherredis_msr()`
 
 ### REVERSE
 - print data in hex format: `printHex()`
@@ -90,8 +90,9 @@ generate gopher payload for attack redis
 - unpack number from bytes: `u16()`, `u32()`, `u64()`
 
 ### MISC
-provide common file signatures and function to patch a file
-- patch file signature: `repair_fileheader()`
+- provide common file signatures and function to patch a file
+  - patch file signature: `repair_fileheader()`
+- fix zip fake encrypt: `repair_zip_fake_encrypt()`
 
 
 ### PWN
@@ -172,6 +173,7 @@ Other
     - gopherredis_ssh
     - gopherredis_msr
     - repair_fileheader
+    - repair_zip_fake_encrypt
 
 - add dependencies: 
     - python-socketio[client]==4.6.0

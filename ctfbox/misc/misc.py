@@ -50,9 +50,13 @@ def repair_zip_fake_encrypt(file_path, backup: bool = True):
     if bs[:4] != head:
         raise RepairError("The file header is not a zip file header")
     bs = bs[:6] + b"\x00" + bs[7:]
-    index = bs.find(b'\x50\x4b\x01\x02')
-    if index != -1:
-        bs = bs[:index+8] + b"\x00" + bs[index+9:]
+    startIndex = 0
+    index = 0
+    while index != -1:
+        index = bs[startIndex:].find(b'\x50\x4b\x01\x02')
+        if index != -1:
+            bs = bs[:startIndex+index+8] + b"\x00" + bs[startIndex+index+9:]
+            startIndex += index+10
 
     if backup:
         os.rename(file_path, file_path+'.bak')

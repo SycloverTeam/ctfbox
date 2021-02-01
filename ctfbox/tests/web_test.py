@@ -87,9 +87,9 @@ Syclover
 
         payload = 's:8:"password";s:9:"123456.00"'
         # diff_len = 1
-        payload_dict = php_serialize_escape_s2l('x', 'yy', payload)
+        payload_dict = php_serialize_escape_s2l('!', '@@', payload)
         u = User(payload_dict.get('insert_data'), '123456')
-        s = serialize(u).replace(b'x', b'yy')
+        s = serialize(u).replace(b'!', b'@@')
         s = s.decode()
         d = unserialize(s)._asdict()
         self.assertEqual('123456.00', d['password'])
@@ -109,9 +109,9 @@ Syclover
                 self.password = password
                 self.sign = 'hello'
 
-        payload_dict = php_serialize_escape_s2l('x', 'yyyyyy', payload, True)
+        payload_dict = php_serialize_escape_s2l('!', '@@@@@', payload, True)
         u = User(payload_dict.get('insert_data'), '123456')
-        s = serialize(u).replace(b'x', b'yyyyyy')
+        s = serialize(u).replace(b'!', b'@@@@@')
         s = s.decode()
         d = unserialize(s)._asdict()
         self.assertEqual('123456.00', d['password'])

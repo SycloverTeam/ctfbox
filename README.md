@@ -171,6 +171,7 @@ Other
     - reshell
     - OOB
     - blindXXE
+    - php_serialize_escape
     - gopherredis_webshell
     - gopherredis_crontab
     - gopherredis_ssh

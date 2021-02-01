@@ -1124,6 +1124,7 @@ def gopherredis_msr(host: str, masterHost: str = "127.0.0.1:2020", authPass: str
         expFileName (str, optional): exploit file name, you can custom it like *.so. Defaults to "syc.so".
         expFilePath (str, optional): exploit file path, if not provided, use the default exp.so. Defaults to "".
         command (str, optional): command you want to run. Defaults to "id".
+        interactive (bool, optional): Whether to enter the interactive mode, in the interactive mode enter command will automatically generate payload. Defaults to False.
         urlEncoding (bool, optional): whether use url encoding payload. Defaults to False.
     """
 

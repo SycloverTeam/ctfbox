@@ -1,7 +1,7 @@
 ## ctfbox 
 **A box for CTF challenges with some sugar functions, Just enjoy it**
 
-Current version: **1.4.2**
+Current version: **1.5.0**
 
 Please use python **3.6+**
 

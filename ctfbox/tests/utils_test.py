@@ -12,6 +12,27 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(url_decode(r"%E4%BD%A0%E5%A5%BD"), "你好")
         self.assertEqual(url_decode(r"+%2B%2F"), " +/")
 
+    def test_html_decode(self):
+        self.assertEqual(html_decode("&#119;&#104;&#111;&#97;&#109;&#105;"), "whoami")
+        self.assertEqual(html_decode("&#x77;&#x68;&#x6f;&#x61;&#x6d;&#x69;"), "whoami")
+
+
+    def test_html_encode(self):
+        self.assertEqual(html_encode("whoami"), "&#119;&#104;&#111;&#97;&#109;&#105;")
+        self.assertEqual(html_encode("whoami", True), "&#x77;&#x68;&#x6f;&#x61;&#x6d;&#x69;")
+
+    def test_base16_decode(self):
+        self.assertEqual(base16_decode("6578616D706C65"), "example")
+
+    def test_base16_encode(self):
+        self.assertEqual(base16_encode("example"), "6578616D706C65")
+
+    def test_base32_decode(self):
+        self.assertEqual(base32_decode("MV4GC3LQNRSQ===="), "example")
+
+    def test_base32_encode(self):
+        self.assertEqual(base32_encode("example"), "MV4GC3LQNRSQ====")
+
     def test_base64_decode(self):
         self.assertEqual(base64_decode("ZXhhbXBsZQ=="), "example")
 

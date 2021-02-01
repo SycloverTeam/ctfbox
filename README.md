@@ -163,6 +163,7 @@ Other
     - bak_scan
     - reshell
     - OOB
+    - blindXXE
     - repair_fileheader
 - add dependencies: 
     - python-socketio[client]==4.6.0

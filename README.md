@@ -59,7 +59,7 @@ Some functions with names similar to PHP, close to intuition
 - generate flask session: `flask_session_encode()`, `flask_session_decode()`
 (***⚠️ There is no flask dependency in ctfbox itself, the following two functions need to install the dependency by yourself***)
 - generate php serialize escape payload: `php_serialize_escape`, `php_serialize_escape_s2l()`, `php_serialize_escape_l2s()`
-- provide a simple file server: `provide()`
+- build a simple file server: `provide()`
 - burte force hash for ctf verification code: `hashAuth()`
 - Send raw request by python-requests: `httpraw()`
 - generate gopher reuqests: `gopherraw()`
@@ -77,6 +77,7 @@ Some functions with names similar to PHP, close to intuition
   - scan for network backup file: `bak_scan()`
 - generate reverse shell command: `reshell()`
 - use for out of band: `OOB()`
+- build a server for blindXXE: `blindXXE()`
 
 
 

@@ -144,10 +144,10 @@ def get_flask_pin(username: str, absRootPath: str, macAddress: str, machineId: s
     """get flask debug pin code.
 
     Args:
-        username (str): username of flask
+        username (str): username of flask, try get it from /etc/passwd or /proc/self/environ
         absRootPath (str): project abs root path,from getattr(mod, '__file__', None)
         macAddress (str): mac address,from /sys/class/net/<eth0>/address
-        machineId (str): machine id,from /etc/machine-id
+        machineId (str): machine id,from /proc/self/cgroup first line with string behind /docker/ or /etc/machine-id or /proc/sys/kernel/random/boot_id
         modName (str, optional): mod name.  Defaults to "flask.app".
         appName (str, optional): app name, from getattr(app, '__name__', getattr(app.__class__, '__name__')). Defaults to "Flask".
 

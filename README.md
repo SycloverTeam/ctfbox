@@ -3,6 +3,8 @@
 
 Current version: **1.5.0**
 
+[中文文档点这里](README_CN.md)
+
 Please use python **3.6+**
 
 ### Guide

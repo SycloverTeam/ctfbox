@@ -22,5 +22,10 @@ class GeneratePayloadError(CtfboxError):
 class HttprawError(CtfboxError):
     pass
 
+
 class ScanError(CtfboxError):
+    pass
+
+
+class RepairError(CtfboxError):
     pass

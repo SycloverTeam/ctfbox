@@ -68,48 +68,32 @@ from ctfbox import * # 这样不会导入pwn模块，请查看下方pwn的使用
 ### WEB
 
 - 生成 flask pin: `get_flask_pin()`
-
 - 生成 flask session: `flask_session_encode()`, `flask_session_decode()` (***⚠️ ctfbox本身不自带flask依赖，这两个函数需要自己安装依赖***)
-
 - 生成php序列化逃逸pyload: `php_serialize_escape`, `php_serialize_escape_s2l()`, `php_serialize_escape_l2s()`
-
 - 构建一个简单的文件服务器: `provide()`
-
 - ctf验证代码的蛮力哈希: `hashAuth()`
-
 - 通过python-requests发送原始请求: `httpraw()`
-
 - 构造gopher请求: `gopherraw()`
-
 - php序列化
-
   - `serialize()`
   - `unserialize()`
   - `serialize_to_file()`
   - `unserialize_from_file()`
   - ...
-
   更多信息请查阅文档和 [这里](https://github.com/mitsuhiko/phpserialize)
-
 - 针对ssrf 生成php soapClient class: `soapclient_ssrf()`
-
 - 网络扫描
-
   - 扫描路径: `scan()`
   - 扫描备份文件: `bak_scan()`
-
 - 生成反向shell命令: `reshell()`
-
 - 用于OOB的函数: `OOB()`
-
 - 为blindXXE构建一个服务器: `blindXXE()`
-
 - 为攻击redis生成gopher payload
-
   - 写 webshell: `gopherredis_webshell()`
   - 写 crontab: `gopherredis_crontab()`
   - ssh密钥授权: `gopherredis_ssh()`
   - 通过主从复制实现的rce: `gopherredis_msr()`
+- 源代码泄露利用, 支持.git .svn: `leakdump()`
 
 ### REVERSE
 

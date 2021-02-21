@@ -88,6 +88,7 @@ Some functions with names similar to PHP, close to intuition
   - write crontab: `gopherredis_crontab()`
   - ssh authorized keys: `gopherredis_ssh()`
   - rce by master-slave replication: `gopherredis_msr()`
+- source code leaks, support .git .svn: `leakdump()`
 
 ### REVERSE
 - print data in hex format: `printHex()`
@@ -167,6 +168,13 @@ Other
 
 ## Logs
 
+### 1.6.0
+- 添加[中文文档](README_CN.md)
+- add some functions:
+    - leakdump
+- update some functions:
+    - get_flask_bin
+        - update docstring
 ### 1.5.0
 - add some functions:
     - scan

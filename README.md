@@ -175,6 +175,8 @@ Other
 - update some functions:
     - get_flask_bin
         - update docstring
+    - print_hex
+        - pretty output
 ### 1.5.0
 - add some functions:
     - scan

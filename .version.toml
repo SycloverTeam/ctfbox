@@ -12,3 +12,8 @@
   location = "README.md"
   replace = "Current version: **{}**"
   search = "Current version: **{}**"
+
+[[operate]]
+  location = "README_CN.md"
+  replace = "Current version: **{}**"
+  search = "Current version: **{}**"

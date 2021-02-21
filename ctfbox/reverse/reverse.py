@@ -4,12 +4,30 @@ from struct import pack, unpack
 from typing import Union
 
 
-def printHex(data: Union[bytes, str], up: bool = True, sep: str = ' '):
+def printHex(data: Union[bytes, str], up: bool = True, addHeader: bool = False, sep: str = ' '):
+    """Print data in hex bytes format
+
+    Args:
+        data (Union[bytes, str]): the data to print
+        up (bool, optional): Uppercase. Defaults to True.
+        addHeader (bool, optional): Wether add row header and column header. Defaults to False.
+        sep (str, optional):  string inserted between values. Defaults to a space. Does not take effect when addHeader=True
+    """
     if isinstance(data, str):
         data = data.encode()
+
+    if addHeader:
+        col = ' ' * (len(hex(len(data))[2:])) + \
+            '   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F'
+        print(col)
+
+    fmt = '%0' + str(len(hex(len(data))[2:])) + 'X'
     bs = list(data)
     for i in range(len(bs)):
-        print(('%02X' if up else '%02x') % bs[i], end=sep)
+        if addHeader:
+            if i % 16 == 0:
+                print(fmt % i, end=': ')
+        print(('%02X' if up else '%02x') % bs[i], end=sep if not addHeader else ' ')
         if (i + 1) % 16 == 0:
             print()
 

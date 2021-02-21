@@ -29,3 +29,14 @@ class ScanError(CtfboxError):
 
 class RepairError(CtfboxError):
     pass
+
+
+class DumpError(CtfboxError):
+    pass
+
+
+class GitParseError(DumpError):
+    pass
+
+class SvnParseError(DumpError):
+    pass

@@ -15,5 +15,5 @@
 
 [[operate]]
   location = "README_CN.md"
-  replace = "Current version: **{}**"
-  search = "Current version: **{}**"
+  replace = "当前版本: **{}**"
+  search = "当前版本: **{}**"

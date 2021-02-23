@@ -93,7 +93,7 @@ from ctfbox import * # 这样不会导入pwn模块，请查看下方pwn的使用
   - 写 crontab: `gopherredis_crontab()`
   - ssh密钥授权: `gopherredis_ssh()`
   - 通过主从复制实现的rce: `gopherredis_msr()`
-- 源代码泄露利用, 支持.git .svn: `leakdump()`
+- 源代码泄露利用, 支持.git .svn .DS_Store: `leakdump()`
 
 ### REVERSE
 

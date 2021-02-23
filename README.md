@@ -88,7 +88,7 @@ Some functions with names similar to PHP, close to intuition
   - write crontab: `gopherredis_crontab()`
   - ssh authorized keys: `gopherredis_ssh()`
   - rce by master-slave replication: `gopherredis_msr()`
-- source code leaks, support .git .svn: `leakdump()`
+- source code leaks, support .git .svn .DS_Store: `leakdump()`
 
 ### REVERSE
 - print data in hex format: `printHex()`
@@ -168,6 +168,13 @@ Other
 
 ## Logs
 
+### 1.7.0
+- update some functions:
+    - leakdump
+        - update docstring
+        - support .DS_Store
+        - better error output
+        - fix some bugs
 ### 1.6.0
 - 添加[中文文档](README_CN.md)
 - add some functions:

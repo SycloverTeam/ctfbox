@@ -38,5 +38,10 @@ class DumpError(CtfboxError):
 class GitParseError(DumpError):
     pass
 
+
 class SvnParseError(DumpError):
+    pass
+
+
+class DSStoreParseError(DumpError):
     pass

@@ -1,4 +1,7 @@
-"gin - a Git index file parser"
+"""gin - a Git index file parser
+
+Origin: https://github.com/sbp/gin/blob/master/gin
+"""
 version = "0.1.006"
 
 import mmap

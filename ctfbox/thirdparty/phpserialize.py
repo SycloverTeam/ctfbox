@@ -2,6 +2,7 @@
 r"""
     phpserialize
     nested object and python object direct serialization by hdbreaker
+    Origin: https://github.com/mitsuhiko/phpserialize
     ~~~~~~~~~~~~
 
     a port of the ``serialize`` and ``unserialize`` functions of

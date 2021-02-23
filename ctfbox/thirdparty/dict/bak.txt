@@ -75,7 +75,6 @@ phpinfo.php
 t.php
 www.zip
 www.rar
-www.zip
 www.7z
 www.tar.gz
 www.tar

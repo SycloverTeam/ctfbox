@@ -1371,7 +1371,8 @@ class _GitDumper(_BasicDumper):
                     self.targets.append((targetUrl, filename))
             self.startPool()
         finally:
-            os.remove(idxFile.name)
+            if idxFile:
+                os.remove(idxFile.name)
 
     def convert(self, data: bytes) -> bytes:
         """ 用zlib对数据进行解压 """
@@ -1407,19 +1408,20 @@ class _SvnDumper(_BasicDumper):
         try:
             """ 针对svn1.7以后的版本 """
             # 创建一个临时文件用来存储wc.db
-            idxfile = self.indexfile(self.base_url + "/wc.db")
+            idxFile = self.indexfile(self.base_url + "/wc.db")
             # 从wc.db中解析URL和文件名
-            for item in self.parse(idxfile.name):
+            for item in self.parse(idxFile.name):
                 sha1, filename = item
                 if not sha1 or not filename:
                     continue
                 url = "%s/pristine/%s/%s.svn-base" % (
                     self.base_url, sha1[6:8], sha1[6:])
                 self.targets.append((url, filename))
-            idxfile.close()
+            idxFile.close()
             self.startPool()
         finally:
-            remove(idxfile.name)
+            if idxFile:
+                os.remove(idxFile.name)
 
     def dump_legacy(self):
         """ 针对svn1.7以前的版本 """

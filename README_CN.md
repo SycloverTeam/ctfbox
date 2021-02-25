@@ -111,7 +111,7 @@ from ctfbox import * # 这样不会导入pwn模块，请查看下方pwn的使用
 
 - 用法
 
-  ```
+  ```python
   # 不支持windows
   from pwn import * # import pwntools
   # 设置必要的pwntool配置...

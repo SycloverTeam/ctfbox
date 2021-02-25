@@ -31,6 +31,7 @@ from ctfbox.exceptions import (DumpError, SvnParseError, DSStoreParseError,
 from ctfbox.thirdparty.gin import GitParse
 from ctfbox.thirdparty.dsstore import DS_Store
 from ctfbox.thirdparty.phpserialize import serialize
+from ctfbox.thirdparty.reverse_mtrand import main as reverse_mt_rand_main
 from ctfbox.utils import (BlindXXEHandler, Context, ProvideHandler, Threader,
                           random_string)
 from requests.sessions import Session
@@ -1285,7 +1286,7 @@ class _BasicDumper(object):
             raise DumpError("Fetch file error: [%s] %s %s" % (
                 status, url, filename))
         self.lock.acquire()
-        print("[%s] %s %s" % (status, url, filename))
+        print("[+] %s" % (filename))
         self.lock.release()
 
         # 处理数据（如有必要）
@@ -1528,3 +1529,21 @@ def leakdump(url: str, outputDir: str = "", threadNum: int = 20):
     if lower_url.endswith(".ds_store"):
         dumper = _DSStoreDumper(url, outputDir, threadNum)
         dumper.start()
+
+
+def reverse_mt_rand(_R000: int, _R227: int, offset: int, flavour: int) -> int:
+    """reverse mt_rand seed without brute force
+
+    Origin:
+        https://github.com/ambionics/mt_rand-reverse
+
+    Args:
+        _R000 (int): first random value.
+        _R227 (int): 228th random value.
+        offset (int): number of mt_rand() calls in between the seeding and the first value.
+        flavour (int): 0 (PHP5) or 1 (PHP7+)
+
+    Returns:
+        int: the seed
+    """
+    return reverse_mt_rand_main(_R000, _R227, offset, flavour)

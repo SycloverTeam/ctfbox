@@ -42,7 +42,7 @@ from ctfbox import * # Will not import the pwn part, please check the PWN Usage 
 ## Functions
 Please refer to docstring for function's signatures and usages
 ### utils
-Some functions with names similar to PHP, close to intuition
+Some useful functions, close to intuition
 - url: `url_encode()`, `url_decode()`
 - html: `html_encode()`, `html_decode()`
 - base16: `base16_encode()`, `base16_decode()`

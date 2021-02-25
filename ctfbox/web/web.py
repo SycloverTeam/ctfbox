@@ -31,6 +31,7 @@ from ctfbox.exceptions import (DumpError, SvnParseError, DSStoreParseError,
 from ctfbox.thirdparty.gin import GitParse
 from ctfbox.thirdparty.dsstore import DS_Store
 from ctfbox.thirdparty.phpserialize import serialize
+from ctfbox.thirdparty.reverse_mtrand import main as reverse_mt_rand_main
 from ctfbox.utils import (BlindXXEHandler, Context, ProvideHandler, Threader,
                           random_string)
 from requests.sessions import Session
@@ -1285,7 +1286,7 @@ class _BasicDumper(object):
             raise DumpError("Fetch file error: [%s] %s %s" % (
                 status, url, filename))
         self.lock.acquire()
-        print("[%s] %s %s" % (status, url, filename))
+        print("[+] %s" % (filename))
         self.lock.release()
 
         # 处理数据（如有必要）
@@ -1371,7 +1372,8 @@ class _GitDumper(_BasicDumper):
                     self.targets.append((targetUrl, filename))
             self.startPool()
         finally:
-            os.remove(idxFile.name)
+            if idxFile:
+                os.remove(idxFile.name)
 
     def convert(self, data: bytes) -> bytes:
         """ 用zlib对数据进行解压 """
@@ -1407,19 +1409,20 @@ class _SvnDumper(_BasicDumper):
         try:
             """ 针对svn1.7以后的版本 """
             # 创建一个临时文件用来存储wc.db
-            idxfile = self.indexfile(self.base_url + "/wc.db")
+            idxFile = self.indexfile(self.base_url + "/wc.db")
             # 从wc.db中解析URL和文件名
-            for item in self.parse(idxfile.name):
+            for item in self.parse(idxFile.name):
                 sha1, filename = item
                 if not sha1 or not filename:
                     continue
                 url = "%s/pristine/%s/%s.svn-base" % (
                     self.base_url, sha1[6:8], sha1[6:])
                 self.targets.append((url, filename))
-            idxfile.close()
+            idxFile.close()
             self.startPool()
         finally:
-            remove(idxfile.name)
+            if idxFile:
+                os.remove(idxFile.name)
 
     def dump_legacy(self):
         """ 针对svn1.7以前的版本 """
@@ -1526,3 +1529,21 @@ def leakdump(url: str, outputDir: str = "", threadNum: int = 20):
     if lower_url.endswith(".ds_store"):
         dumper = _DSStoreDumper(url, outputDir, threadNum)
         dumper.start()
+
+
+def reverse_mt_rand(_R000: int, _R227: int, offset: int, flavour: int) -> int:
+    """reverse mt_rand seed without brute force
+
+    Origin:
+        https://github.com/ambionics/mt_rand-reverse
+
+    Args:
+        _R000 (int): first random value.
+        _R227 (int): 228th random value.
+        offset (int): number of mt_rand() calls in between the seeding and the first value.
+        flavour (int): 0 (PHP5) or 1 (PHP7+)
+
+    Returns:
+        int: the seed
+    """
+    return reverse_mt_rand_main(_R000, _R227, offset, flavour)

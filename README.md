@@ -89,6 +89,7 @@ Some functions with names similar to PHP, close to intuition
   - ssh authorized keys: `gopherredis_ssh()`
   - rce by master-slave replication: `gopherredis_msr()`
 - source code leaks, support .git .svn .DS_Store: `leakdump()`
+- reverse mt_rand seed without brute force: `reverse_mt_rand()`
 
 ### REVERSE
 - print data in hex format: `printHex()`
@@ -175,6 +176,8 @@ Other
         - support .DS_Store
         - better error output
         - fix some bugs
+- add some functions:
+    - reverse_mt_rand
 ### 1.6.0
 - 添加[中文文档](README_CN.md)
 - add some functions:

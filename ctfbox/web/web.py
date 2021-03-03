@@ -34,7 +34,6 @@ from ctfbox.thirdparty.phpserialize import serialize
 from ctfbox.thirdparty.reverse_mtrand import main as reverse_mt_rand_main
 from ctfbox.utils import (BlindXXEHandler, Context, ProvideHandler, Threader,
                           random_string)
-from requests.sessions import Session
 
 
 class HashType(Enum):
@@ -1250,7 +1249,7 @@ class _BasicDumper(object):
         }
         self.threadNum = threadNum
         self.lock = Lock()
-        self.session = Session()
+        self.session = requests.Session()
 
     def start(self):
         self.dump()

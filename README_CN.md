@@ -48,8 +48,7 @@ from ctfbox import * # 这样不会导入pwn模块，请查看下方pwn的使用
 请参阅文档了解函数的签名和用法。
 
 ### utils
-
-一些函数的名称与PHP类似，这很直观
+实用的工具函数,近乎直觉
 
 - url: `url_encode()`, `url_decode()`
 - html: `html_encode()`, `html_decode()`
@@ -112,7 +111,7 @@ from ctfbox import * # 这样不会导入pwn模块，请查看下方pwn的使用
 
 - 用法
 
-  ```
+  ```python
   # 不支持windows
   from pwn import * # import pwntools
   # 设置必要的pwntool配置...

@@ -1161,7 +1161,7 @@ def gopherredis_msr(host: str, masterHost: str = "127.0.0.1:2020", authPass: str
         while flag:
             getData = client.recv(1024)
             if b"PING" in getData:
-                client.send(b"+PING\r\n")
+                client.send(b"+PONG\r\n")
                 flag = True
             elif b"REPLCONF" in getData:
                 client.send(b"+OK\r\n")

@@ -1190,7 +1190,7 @@ def gopherredis_msr(host: str, masterHost: str = "127.0.0.1:2020", authPass: str
     print("--- Build server ---")
     host_list = masterHost.split(":")
     ip, port = host_list[0], host_list[1]
-    print(f"Listen on {host}:{port}... ")
+    print(f"Listen on {ip}:{port}... ")
     RogueServer(ip=ip, port=int(port))
 
     print("--- Load module ---")

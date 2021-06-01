@@ -63,11 +63,12 @@ Some useful functions, close to intuition
 - generate flask pin: `get_flask_pin()`
 - generate flask session: `flask_session_encode()`, `flask_session_decode()`
 (***⚠️ There is no flask dependency in ctfbox itself, the following two functions need to install the dependency by yourself***)
-- generate php serialize escape payload: `php_serialize_escape`, `php_serialize_escape_s2l()`, `php_serialize_escape_l2s()`
 - build a simple file server: `provide()`
 - burte force hash for ctf verification code: `hashAuth()`
 - Send raw request by python-requests: `httpraw()`
 - generate gopher reuqests: `gopherraw()`
+- generate php serialize escape payload: `php_serialize_escape`, `php_serialize_escape_s2l()`, `php_serialize_escape_l2s()`
+- change normal stirng to php serialize S string: `php_serialize_S()`
 - php serialize
    - `serialize()`
    - `unserialize()`
@@ -168,6 +169,9 @@ Other
 - [Morouu](http://github.com/Morouu)
 
 ## Logs
+### 1.8.0
+- add some functions:
+    - php_serialize_S
 
 ### 1.7.0
 - update some functions:

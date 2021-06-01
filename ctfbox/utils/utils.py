@@ -218,7 +218,6 @@ class BlindXXEHandler(BaseHTTPRequestHandler):
                     content = self.content
                 readFile = query_dict.get("file", "/etc/passwd")
                 content = content.replace(b"!readFile!", readFile.encode())
-                print("test\n", content)
                 self.wfile.write(content)
             elif filepath == "/custom.dtd":
                 sendReply = True

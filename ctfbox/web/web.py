@@ -11,7 +11,7 @@ from http.server import HTTPServer
 from itertools import chain
 from json import loads
 from math import ceil
-from os import path, remove
+from os import path
 from queue import Queue
 from re import match, sub, IGNORECASE
 from socket import AF_INET, SO_REUSEADDR, SOCK_STREAM, SOL_SOCKET, socket
@@ -32,7 +32,7 @@ from ctfbox.thirdparty.gin import GitParse
 from ctfbox.thirdparty.dsstore import DS_Store
 from ctfbox.thirdparty.phpserialize import serialize
 from ctfbox.thirdparty.reverse_mtrand import main as reverse_mt_rand_main
-from ctfbox.utils import (BlindXXEHandler, Context, ProvideHandler, Threader,
+from ctfbox.utils import (bin2hex, BlindXXEHandler, Context, ProvideHandler, Threader,
                           random_string)
 
 
@@ -1446,7 +1446,8 @@ class _SvnDumper(_BasicDumper):
             conn.close()
             return newitems
         except Exception as e:
-            raise SvnParseError("Invalid .svn / Sqlite connection failed") from e
+            raise SvnParseError(
+                "Invalid .svn / Sqlite connection failed") from e
 
 
 class _DSStoreDumper(_BasicDumper):
@@ -1546,3 +1547,23 @@ def reverse_mt_rand(_R000: int, _R227: int, offset: int, flavour: int) -> int:
         int: the seed
     """
     return reverse_mt_rand_main(_R000, _R227, offset, flavour)
+
+
+def php_serialize_S(string: str) -> str:
+    """change normal string to php serialize S stirng
+
+    Args:
+        string (str): normal string
+
+    Returns:
+        str: php serialize S stirng
+    """
+    string = bin2hex(string)
+    if not string:
+        return ""
+
+    S_string = ""
+    for i in range(0, len(string), 2):
+        S_string += "\\" + string[i:i+2]
+
+    return S_string

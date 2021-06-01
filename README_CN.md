@@ -68,11 +68,12 @@ from ctfbox import * # 这样不会导入pwn模块，请查看下方pwn的使用
 
 - 生成 flask pin: `get_flask_pin()`
 - 生成 flask session: `flask_session_encode()`, `flask_session_decode()` (***⚠️ ctfbox本身不自带flask依赖，这两个函数需要自己安装依赖***)
-- 生成php序列化逃逸pyload: `php_serialize_escape`, `php_serialize_escape_s2l()`, `php_serialize_escape_l2s()`
 - 构建一个简单的文件服务器: `provide()`
 - ctf验证代码的蛮力哈希: `hashAuth()`
 - 通过python-requests发送原始请求: `httpraw()`
 - 构造gopher请求: `gopherraw()`
+- 生成php序列化逃逸pyload: `php_serialize_escape`, `php_serialize_escape_s2l()`, `php_serialize_escape_l2s()`
+- 将普通字符串转换为php反序列化S字符串: `php_serialize_S()`
 - php序列化
   - `serialize()`
   - `unserialize()`

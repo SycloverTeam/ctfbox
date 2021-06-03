@@ -255,6 +255,22 @@ def url_encode(s: str, encoding: str = 'utf-8') -> str:
         return ""
 
 
+def force_url_encode(data: str) -> str:
+    """force url encode normal string
+
+    Args:
+        data (str): normal string
+
+    Returns:
+        str: url encoded stirng
+    """
+    string = bin2hex(data)
+    if not string:
+        return ""
+
+    return "".join("%" + string[i:i+2] for i in range(0, len(string), 2))
+
+
 def url_decode(s: str, encoding: str = 'utf-8') -> str:
     try:
         return unquote_plus(s, encoding=encoding)
@@ -460,3 +476,5 @@ def rot_encode(data: str, n: int) -> str:
     trans = chars[n:]+chars[:n]
     def rot_char(c): return trans[chars.find(c)] if chars.find(c) > -1 else c
     return ''.join(rot_char(c) for c in data)
+
+

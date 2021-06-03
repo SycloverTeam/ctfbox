@@ -50,7 +50,7 @@ from ctfbox import * # 这样不会导入pwn模块，请查看下方pwn的使用
 ### utils
 实用的工具函数,近乎直觉
 
-- url: `url_encode()`, `url_decode()`
+- url: `url_encode()`, `url_decode()`, `force_url_encode()`
 - html: `html_encode()`, `html_decode()`
 - base16: `base16_encode()`, `base16_decode()`
 - base32: `base32_encode()`, `base32_decode()`

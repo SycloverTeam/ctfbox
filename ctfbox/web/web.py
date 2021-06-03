@@ -1562,8 +1562,4 @@ def php_serialize_S(string: str) -> str:
     if not string:
         return ""
 
-    S_string = ""
-    for i in range(0, len(string), 2):
-        S_string += "\\" + string[i:i+2]
-
-    return S_string
+    return "".join("\\" + string[i:i+2] for i in range(0, len(string), 2))

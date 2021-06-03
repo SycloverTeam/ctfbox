@@ -43,7 +43,7 @@ from ctfbox import * # Will not import the pwn part, please check the PWN Usage 
 Please refer to docstring for function's signatures and usages
 ### utils
 Some useful functions, close to intuition
-- url: `url_encode()`, `url_decode()`
+- url: `url_encode()`, `url_decode()`, `force_url_encode()`
 - html: `html_encode()`, `html_decode()`
 - base16: `base16_encode()`, `base16_decode()`
 - base32: `base32_encode()`, `base32_decode()`
@@ -169,6 +169,10 @@ Other
 - [Morouu](http://github.com/Morouu)
 
 ## Logs
+### 1.9.0
+- add some functions:
+    - force_url_encode
+
 ### 1.8.0
 - add some functions:
     - php_serialize_S

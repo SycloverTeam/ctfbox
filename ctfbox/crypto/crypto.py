@@ -1,5 +1,4 @@
 from ctypes import c_int
-global windows_status
 windows_status = 1
 def windows_srand(seed):
     """
@@ -26,8 +25,6 @@ def windows_rand():
     global windows_status
     windows_status=(214013*windows_status+2531011) & 0xffffffff
     return windows_status>>16&((1<<15)-1)
-
-global android_seed, android_multiplier, android_addend, android_mask, android_seedUniquifier 
 
 android_seed = 0
 android_multiplier = 0x5DEECE66D
@@ -93,8 +90,6 @@ def android_nextInt_bound(bound):
             u = _next(31)
     return r
 
-global linux_status
-global linux_r
 linux_status = 1
 linux_r = []
 def linux_srand(seed):
@@ -110,6 +105,7 @@ def linux_srand(seed):
     """
     global linux_status
     global linux_r
+    linux_status = 1
     linux_r = [0] * (344 + linux_status)
     linux_r[0] = seed
     for i in range(1, 31):
@@ -135,13 +131,13 @@ def linux_rand():
     return linux_r[343 + linux_status - 1] >> 1
 
 """
-import myrandom
-myrandom.android_random(1) #seed must be set
-myrandom.windows_srand(1) #seed must be set
-myrandom.linux_srand(1) #seed must be set
+from ctfbox.crypto import crypto
+crypto.android_random(2) #seed must be set
+crypto.windows_srand(2) #seed must be set
+crypto.linux_srand(2) #seed must be set
 for i in range(50):
-    print(myrandom.android_nextInt()) #random number
-    print(myrandom.android_nextInt_bound(10)) #random numbers between[0,10)
-    print(myrandom.windows_rand()) #random number
-    print(myrandom.linux_rand()) #random number
+    print(crypto.android_nextInt()) #random number
+    print(crypto.android_nextInt_bound(10)) #random numbers between[0,10)
+    print(crypto.windows_rand()) #random number
+    print(crypto.linux_rand()) #random number
 """

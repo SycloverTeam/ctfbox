@@ -142,3 +142,6 @@ cython_debug/
 # pdm
 __pypackages__/
 .pdm.toml
+
+# other
+publish.py

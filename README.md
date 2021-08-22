@@ -103,6 +103,10 @@ Some useful functions, close to intuition
 - fix zip fake encrypt: `repair_zip_fake_encrypt()`
 
 
+### CRYPTO
+- srand for multiple platforms: `windows_srand()`, `linux_srand()`, `android_srand()`, 
+- get random integer from multiple platforms: `windows_rand()`,  `linux_rand()`, `android_nextInt()`, `android_nextInt_bound()`
+
 ### PWN
 - Usage
    ```python
@@ -169,6 +173,22 @@ Other
 - [Morouu](http://github.com/Morouu)
 
 ## Logs
+### 1.10.0
+- remove dependencies:
+    - python-socketio[client]==4.6.0
+    - python-engineio==3.14.2
+- rewrite some functions: 
+    - OOB
+- add some functions:
+    - crypto
+        - windows_srand
+        - windows_rand
+        - linux_srand
+        - linux_rand
+        - android_srand
+        - android_nextInt
+        - android_nextInt_bound
+
 ### 1.9.0
 - add some functions:
     - force_url_encode

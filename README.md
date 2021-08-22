@@ -177,6 +177,8 @@ Other
 - remove dependencies:
     - python-socketio[client]==4.6.0
     - python-engineio==3.14.2
+- update some functions:
+    - printHex
 - rewrite some functions: 
     - OOB
 - add some functions:

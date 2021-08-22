@@ -4,11 +4,13 @@ from struct import pack, unpack
 from typing import Union
 
 
-def printHex(data: Union[bytes, str], up: bool = True, addHeader: bool = False, sep: str = ' '):
+def printHex(data: Union[bytes, str], offset: int = 0,
+             up: bool = True, addHeader: bool = False, sep: str = ' '):
     """Print data in hex bytes format
 
     Args:
-        data (Union[bytes, str]): the data to print
+        data (bytes | str): the data to print
+        offset (int): offset to the data, can be negative numbers
         up (bool, optional): Uppercase. Defaults to True.
         addHeader (bool, optional): Wether add row header and column header. Defaults to False.
         sep (str, optional):  string inserted between values. Defaults to a space. Does not take effect when addHeader=True
@@ -16,18 +18,32 @@ def printHex(data: Union[bytes, str], up: bool = True, addHeader: bool = False, 
     if isinstance(data, str):
         data = data.encode()
 
+    col_header_len = max(
+        1,  # at least
+        len('%x' % (offset - offset % 16)),
+        len('%x' % (len(data) + offset))
+    )
+
     if addHeader:
-        col = ' ' * (len(hex(len(data))[2:])) + \
-            '   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F'
+        # need to detect both positive side and negtive side
+        # to fit the `offset`
+        col = ' ' * col_header_len + '   0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F'
         print(col)
 
-    fmt = '%0' + str(len(hex(len(data))[2:])) + 'X'
+    rest = offset % 16
+    offset_floor = offset - rest
+
+    fmt = '%' + str(col_header_len) + 'X'
     bs = list(data)
-    for i in range(len(bs)):
+    for i in range(offset_floor, offset + len(bs)):
         if addHeader:
             if i % 16 == 0:
                 print(fmt % i, end=': ')
-        print(('%02X' if up else '%02x') % bs[i], end=sep if not addHeader else ' ')
+        if i < offset:
+            print('  ', end=' ')
+        else:
+            print(('%02X' if up else '%02x') %
+                  bs[i - offset], end=sep if not addHeader else ' ')
         if (i + 1) % 16 == 0:
             print()
 

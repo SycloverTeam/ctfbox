@@ -80,7 +80,7 @@ def android_nextInt():
         int: Random numbers
 
     Example:
-        #seed must be set
+        # seed must be set using android_srand()
         android_nextInt()
     """
     return _next(32)

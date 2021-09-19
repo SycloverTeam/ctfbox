@@ -1,7 +1,7 @@
 ## ctfbox 
 **A box for CTF challenges with some sugar functions, Just enjoy it**
 
-Current version: **1.5.0**
+Current version: **1.9.0**
 
 [中文文档点这里](README_CN.md)
 
@@ -42,8 +42,8 @@ from ctfbox import * # Will not import the pwn part, please check the PWN Usage 
 ## Functions
 Please refer to docstring for function's signatures and usages
 ### utils
-Some functions with names similar to PHP, close to intuition
-- url: `url_encode()`, `url_decode()`
+Some useful functions, close to intuition
+- url: `url_encode()`, `url_decode()`, `force_url_encode()`
 - html: `html_encode()`, `html_decode()`
 - base16: `base16_encode()`, `base16_decode()`
 - base32: `base32_encode()`, `base32_decode()`
@@ -63,11 +63,12 @@ Some functions with names similar to PHP, close to intuition
 - generate flask pin: `get_flask_pin()`
 - generate flask session: `flask_session_encode()`, `flask_session_decode()`
 (***⚠️ There is no flask dependency in ctfbox itself, the following two functions need to install the dependency by yourself***)
-- generate php serialize escape payload: `php_serialize_escape`, `php_serialize_escape_s2l()`, `php_serialize_escape_l2s()`
 - build a simple file server: `provide()`
 - burte force hash for ctf verification code: `hashAuth()`
 - Send raw request by python-requests: `httpraw()`
 - generate gopher reuqests: `gopherraw()`
+- generate php serialize escape payload: `php_serialize_escape`, `php_serialize_escape_s2l()`, `php_serialize_escape_l2s()`
+- change normal stirng to php serialize S string: `php_serialize_S()`
 - php serialize
    - `serialize()`
    - `unserialize()`
@@ -88,6 +89,8 @@ Some functions with names similar to PHP, close to intuition
   - write crontab: `gopherredis_crontab()`
   - ssh authorized keys: `gopherredis_ssh()`
   - rce by master-slave replication: `gopherredis_msr()`
+- source code leaks, support .git .svn .DS_Store: `leakdump()`
+- reverse mt_rand seed without brute force: `reverse_mt_rand()`
 
 ### REVERSE
 - print data in hex format: `printHex()`
@@ -99,6 +102,10 @@ Some functions with names similar to PHP, close to intuition
   - patch file signature: `repair_fileheader()`
 - fix zip fake encrypt: `repair_zip_fake_encrypt()`
 
+
+### CRYPTO
+- srand for multiple platforms: `windows_srand()`, `linux_srand()`, `android_srand()`, 
+- get random integer from multiple platforms: `windows_rand()`,  `linux_rand()`, `android_nextInt()`, `android_nextInt_bound()`
 
 ### PWN
 - Usage
@@ -166,7 +173,48 @@ Other
 - [Morouu](http://github.com/Morouu)
 
 ## Logs
+### 1.10.0
+- remove dependencies:
+    - python-socketio[client]==4.6.0
+    - python-engineio==3.14.2
+- rewrite some functions: 
+    - OOB
+- add some functions:
+    - crypto
+        - windows_srand
+        - windows_rand
+        - linux_srand
+        - linux_rand
+        - android_srand
+        - android_nextInt
+        - android_nextInt_bound
 
+### 1.9.0
+- add some functions:
+    - force_url_encode
+
+### 1.8.0
+- add some functions:
+    - php_serialize_S
+
+### 1.7.0
+- update some functions:
+    - leakdump
+        - update docstring
+        - support .DS_Store
+        - better error output
+        - fix some bugs
+- add some functions:
+    - reverse_mt_rand
+### 1.6.0
+- 添加[中文文档](README_CN.md)
+- add some functions:
+    - leakdump
+- update some functions:
+    - get_flask_bin
+        - update docstring
+    - print_hex
+        - pretty output
 ### 1.5.0
 - add some functions:
     - scan

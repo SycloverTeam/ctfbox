@@ -1,6 +1,6 @@
 [project]
 name = "ctfbox"
-version = "1.5.0"
+version = "1.9.0"
 description = "A box for CTF challenges with some sugar functions, Just enjoy it"
 authors = [
     "Syclover <>",
@@ -12,13 +12,7 @@ authors = [
 ]
 dependencies = [
     "requests<3.0.0,>=2.25.1",
-    "PyJWT<3.0.0,>=2.0.1",
-    "python-engineio==3.14.2",
-    "python-socketio[client]==4.6.0",
-]
-dev-dependencies = [
-    "icecream<3.0.0,>=2.0.0",
-]
+    "PyJWT<3.0.0,>=2.0.1"]
 requires-python = ">=3.7"
 dynamic = ["classifiers"]
 license = {text = "MIT"}
@@ -29,6 +23,11 @@ homepage = "https://github.com/WAY29/ctfbox"
 
 [tool]
 [tool.pdm]
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "icecream<3.0.0,>=2.0.0",
+]
 
 [build-system]
 requires = ["pdm-pep517"]

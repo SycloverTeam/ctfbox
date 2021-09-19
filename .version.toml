@@ -1,7 +1,7 @@
 [main]
   serialize = "{version}-{banner}"
   tag = true
-  version = "1.5.0"
+  version = "1.9.0"
 
 [[operate]]
   location = "pyproject.toml"
@@ -12,3 +12,8 @@
   location = "README.md"
   replace = "Current version: **{}**"
   search = "Current version: **{}**"
+
+[[operate]]
+  location = "README_CN.md"
+  replace = "当前版本: **{}**"
+  search = "当前版本: **{}**"

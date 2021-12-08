@@ -501,7 +501,7 @@ def rot(data: str, n: int) -> str:
     def rot_char(c): return trans[chars.find(c)] if chars.find(c) > -1 else c
     return ''.join(rot_char(c) for c in data)
 
-def auto_decode(s: str) -> tuple:
+def auto_decode(s: str) -> Dict[str,str]:
     """Decrypted in the usual way
 
     Args:
@@ -586,13 +586,13 @@ def decode_and_print(unknown_bytes):
                     output_dict[name] = repr(decoded_bytes)
         else:
             failed_encodings.append(name)
-    ans=[]
+    ans={}
     if output_dict:
         column_chars = max([len(name) for name in output_dict.keys()])
         for name, output in output_dict.items():
-            ans.append("{} : {}".format(name.ljust(column_chars), output))
-    ans.append("Failed to decode:+%s)"%(", ".join(failed_encodings)))
-    ans.append("Output same as input:+%s)"%(", ".join(no_difference)))
+            ans[name.ljust(column_chars)]=("{}".format(output))
+    ans["Failed to decode:"]=(", ".join(failed_encodings))
+    ans["Output same as input:"]=(", ".join(no_difference))
     return ans
 
 

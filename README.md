@@ -44,18 +44,32 @@ Please refer to docstring for function's signatures and usages
 ### utils
 Some useful functions, close to intuition
 - url: `url_encode()`, `url_decode()`, `force_url_encode()`
+
 - html: `html_encode()`, `html_decode()`
+
 - base16: `base16_encode()`, `base16_decode()`
+
 - base32: `base32_encode()`, `base32_decode()`
+
 - base64: `base64_encode()`, `base64_decode()`
+
 - json: `json_encode()`, `json_decode()`
+
 - hex: `bin2hex()`, `hex2bin()`
+
 - jwt: `jwt_encode()`, `jwt_decode()`
+
 - rot: `rot_encode()`
+
 - hash: `md5()`, `sha1()`, `sha256()`, `sha512()`
+
 - random: `random_int()`, `random_string()`
+
 - prase od command data: `od_parse()`
+
 - A decorator to make it multi-threaded: `Threader()`
+
+- autodecode:`url_encode()` include:Base64,Base32,Base16,Base85,uudecode,rot13,html
 
   
 

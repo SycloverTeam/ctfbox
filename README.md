@@ -69,7 +69,7 @@ Some useful functions, close to intuition
 
 - A decorator to make it multi-threaded: `Threader()`
 
-- autodecode:`url_encode()` include:Base64,Base32,Base16,Base85,uudecode,rot13,html
+- autodecode:`auto_decode()` include:Base64,Base32,Base16,Base85,uudecode,rot13,html
 
   
 

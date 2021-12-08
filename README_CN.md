@@ -61,7 +61,7 @@ from ctfbox import * # 这样不会导入pwn模块，请查看下方pwn的使用
 - rot: `rot_encode()`
 - hash: `md5()`, `sha1()`, `sha256()`, `sha512()`
 - random: `random_int()`, `random_string()`
-- autodecode:`url_encode()` include:Base64,Base32,Base16,Base85,uudecode,rot13,html
+- autodecode:`auto_decode()` include:Base64,Base32,Base16,Base85,uudecode,rot13,html
 - 解析od命令数据: `od_parse()`
 - 一个可以让它多线程的装饰器: `Threader()`
 

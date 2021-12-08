@@ -501,7 +501,23 @@ def rot(data: str, n: int) -> str:
     def rot_char(c): return trans[chars.find(c)] if chars.find(c) > -1 else c
     return ''.join(rot_char(c) for c in data)
 
-def auto_decode(s: str) -> str:
+def auto_decode(s: str) -> tuple:
+    """Decrypted in the usual way
+
+    Args:
+        s (str): data to be decoded
+
+    Returns:
+        tuple: Results of decryption
+
+    Example:
+        auto_decode("MTEx") -> 
+        "['Base64 : 111',
+        "Base85 : b'E\\x84\\xc7'",
+        'ROT13  : ZGRk',
+        'Failed to decode:+Base32, Base16, Ascii85, Uuencoding)',
+        'Output same as input:+HTML)']"
+    """
     return decode_and_print(s.encode())
 
 def wrap_uu(func):
@@ -540,8 +556,6 @@ funcs['Uuencoding'] = wrap_uu(uu.decode)
 funcs['ROT13'] = wrap_rot13(codecs.decode)
 funcs['HTML'] = wrap_html(html.unescape)
 def decode_bytes(unknown_bytes, func, encoding):
-    assert isinstance(unknown_bytes, bytes), \
-        "{0} is type {1} not an instance of 'bytes' in encoding {2}".format(repr(unknown_bytes), type(unknown_bytes), encoding)
     decoded_bytes = None
     try:
         decoded_bytes = func(unknown_bytes)
@@ -556,7 +570,7 @@ def decode_bytes(unknown_bytes, func, encoding):
     return decoded_bytes
 
 def decode_and_print(unknown_bytes):
-    failed_encodings = []
+    failed_encodings = []  
     no_difference = []
     output_dict = collections.OrderedDict()
     for name, func in funcs.items():
@@ -572,13 +586,14 @@ def decode_and_print(unknown_bytes):
                     output_dict[name] = repr(decoded_bytes)
         else:
             failed_encodings.append(name)
+    ans=[]
     if output_dict:
         column_chars = max([len(name) for name in output_dict.keys()])
         for name, output in output_dict.items():
-            print("{} : {}".format(name.ljust(column_chars), output))
-    print("Failed to decode:", ", ".join(failed_encodings))
-    print("Output same as input:", ", ".join(no_difference))
-
+            ans.append("{} : {}".format(name.ljust(column_chars), output))
+    ans.append("Failed to decode:+%s)"%(", ".join(failed_encodings)))
+    ans.append("Output same as input:+%s)"%(", ".join(no_difference)))
+    return ans
 
 
 

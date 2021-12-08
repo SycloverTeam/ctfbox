@@ -512,11 +512,11 @@ def auto_decode(s: str) -> Dict[str,str]:
 
     Example:
         auto_decode("MTEx") -> 
-        "['Base64 : 111',
-        "Base85 : b'E\\x84\\xc7'",
-        'ROT13  : ZGRk',
-        'Failed to decode:+Base32, Base16, Ascii85, Uuencoding)',
-        'Output same as input:+HTML)']"
+        "'Base64': '111',
+        'Base85': "b'E\\x84\\xc7'",
+        'ROT13 ': 'ZGRk',
+        'Failed to decode:': 'Base32, Base16, Ascii85, Uuencoding',
+        'Output same as input:': 'HTML'"
     """
     return decode_and_print(s.encode())
 

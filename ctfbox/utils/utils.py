@@ -489,15 +489,15 @@ def auto_decode(s: str) -> Dict[str,str]:
         s(str): data to be decoded
 
     Returns:
-        tuple: Results of decryption
+        Dict[str,str]: Results of decryption
 
     Example:
         auto_decode("MTEx") -> 
-        "'Base64': '111',
+        {"'Base64': '111',
         'Base85': "b'E\\x84\\xc7'",
         'ROT13 ': 'ZGRk',
         'Error': 'Base32, Base16, Ascii85, Uuencoding',
-        'No change': 'HTML'"
+        'No change': 'HTML'"}
     """
     return _atdecode(s.encode())
 

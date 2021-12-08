@@ -63,7 +63,7 @@ from ctfbox import * # 这样不会导入pwn模块，请查看下方pwn的使用
 - random: `random_int()`, `random_string()`
 - 解析od命令数据: `od_parse()`
 - 一个可以让它多线程的装饰器: `Threader()`
-
+- 常见解码: `auto_decode()`
 ### WEB
 
 - 生成 flask pin: `get_flask_pin()`

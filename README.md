@@ -56,7 +56,7 @@ Some useful functions, close to intuition
 - random: `random_int()`, `random_string()`
 - prase od command data: `od_parse()`
 - A decorator to make it multi-threaded: `Threader()`
-
+- Decrypted in the usual way: `auto_decode()`
   
 
 ### WEB

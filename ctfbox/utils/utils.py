@@ -1,9 +1,9 @@
-
-from base64 import (b16decode, b16encode, b32decode, b32encode, b64decode,
-                    b64encode, urlsafe_b64decode, urlsafe_b64encode)
-from binascii import hexlify, unhexlify
+import base64
+import binhex
+import binascii
 from bz2 import decompress as bz2decompress
 from concurrent.futures import ThreadPoolExecutor
+import codecs 
 from functools import wraps
 from hashlib import md5 as _md5
 from hashlib import sha1 as _sha1
@@ -12,12 +12,17 @@ from hashlib import sha512 as _sha512
 from http.server import BaseHTTPRequestHandler
 from json import dumps, loads
 from os import path
+import html
+import collections
 from random import choice, randint
 from re import sub
 from string import ascii_lowercase, digits
 from traceback import format_exc, print_exc
 from typing import Dict, Union
-from urllib.parse import quote_plus, unquote_plus, urlparse
+import uu
+import urllib.parse 
+import io
+
 
 import jwt
 
@@ -476,5 +481,97 @@ def rot_encode(data: str, n: int) -> str:
     trans = chars[n:]+chars[:n]
     def rot_char(c): return trans[chars.find(c)] if chars.find(c) > -1 else c
     return ''.join(rot_char(c) for c in data)
+
+def auto_decode(s: str) -> Dict[str,str]:
+    """Decrypted in the usual way
+
+    Args:
+        s(str): data to be decoded
+
+    Returns:
+        Dict[str,str]: Results of decryption
+
+    Example:
+        auto_decode("MTEx") -> 
+        {"'Base64': '111',
+        'Base85': "b'E\\x84\\xc7'",
+        'ROT13 ': 'ZGRk',
+        'Error': 'Base32, Base16, Ascii85, Uuencoding',
+        'No change': 'HTML'"}
+    """
+    return _atdecode(s.encode())
+
+def _wrap_uu(func):
+    def new_func(in_bytes):
+        in_file = io.BytesIO(in_bytes)
+        out_file = io.BytesIO()
+        func(in_file, out_file)
+        out_file.seek(0)
+        return out_file.read()
+    return new_func
+
+def _wrap_rot13(func):
+    def new_func(in_bytes):
+        in_str = in_bytes.decode()
+        out_str = func(in_str, 'rot-13')
+        return out_str.encode()
+    return new_func
+
+def _wrap_html(func):
+    def new_func(in_bytes):
+        in_str = in_bytes.decode()
+        out_str = func(in_str)
+        return out_str.encode()
+    return new_func
+
+_funcs = collections.OrderedDict()
+_funcs['Base64'] = base64.standard_b64decode
+_funcs['Base32'] = base64.b32decode
+_funcs['Base16'] = base64.b16decode
+_funcs['Ascii85'] = base64.a85decode
+_funcs['Base85'] = base64.b85decode
+_funcs['Uuencoding'] = _wrap_uu(uu.decode)
+_funcs['ROT13'] = _wrap_rot13(codecs.decode)
+_funcs['HTML'] = _wrap_html(html.unescape)
+def _decode_bytes(unknown_bytes, func, encoding):
+    decoded_bytes = None
+    try:
+        decoded_bytes = func(unknown_bytes)
+    except binascii.Error:
+        pass
+    except binhex.Error:
+        pass
+    except uu.Error:
+        pass
+    except ValueError:
+        pass
+    return decoded_bytes
+
+def _atdecode(unknown_bytes):
+    failed_encodings = []  
+    no_difference = []
+    output_dict = collections.OrderedDict()
+    for name, func in _funcs.items():
+        decoded_bytes = _decode_bytes(unknown_bytes, func, name)
+        if decoded_bytes:
+            if decoded_bytes == unknown_bytes:
+                no_difference.append(name)
+            else:
+                try:
+                    unicode_str = decoded_bytes.decode()
+                    output_dict[name] = unicode_str
+                except UnicodeDecodeError:
+                    output_dict[name] = repr(decoded_bytes)
+        else:
+            failed_encodings.append(name)
+    ans={}
+    if output_dict:
+        column_chars = max([len(name) for name in output_dict.keys()])
+        for name, output in output_dict.items():
+            ans[name.ljust(column_chars)]=("{}".format(output))
+    ans["Error"]=(", ".join(failed_encodings))
+    ans["No change"]=(", ".join(no_difference))
+    return ans
+
 
 

@@ -569,8 +569,8 @@ def _atdecode(unknown_bytes):
         column_chars = max([len(name) for name in output_dict.keys()])
         for name, output in output_dict.items():
             ans[name.ljust(column_chars)]=("{}".format(output))
-    ans["Failed to decode:"]=(", ".join(failed_encodings))
-    ans["Output same as input:"]=(", ".join(no_difference))
+    ans["Error:"]=(", ".join(failed_encodings))
+    ans["No change:"]=(", ".join(no_difference))
     return ans
 
 

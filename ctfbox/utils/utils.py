@@ -496,8 +496,8 @@ def auto_decode(s: str) -> Dict[str,str]:
         "'Base64': '111',
         'Base85': "b'E\\x84\\xc7'",
         'ROT13 ': 'ZGRk',
-        'error:': 'Base32, Base16, Ascii85, Uuencoding',
-        'no change:': 'HTML'"
+        'Error': 'Base32, Base16, Ascii85, Uuencoding',
+        'No change': 'HTML'"
     """
     return _atdecode(s.encode())
 
@@ -569,8 +569,8 @@ def _atdecode(unknown_bytes):
         column_chars = max([len(name) for name in output_dict.keys()])
         for name, output in output_dict.items():
             ans[name.ljust(column_chars)]=("{}".format(output))
-    ans["Error:"]=(", ".join(failed_encodings))
-    ans["No change:"]=(", ".join(no_difference))
+    ans["Error"]=(", ".join(failed_encodings))
+    ans["No change"]=(", ".join(no_difference))
     return ans
 
 

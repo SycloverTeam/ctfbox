@@ -1,5 +1,6 @@
 [main]
   serialize = "{version}-{banner}"
+  extraCommands = ["pdm run publish", "git push", "git push --tags"]
   tag = true
   version = "1.10.0"
 

@@ -14,7 +14,6 @@ dependencies = [
     "requests<3.0.0,>=2.25.1",
     "PyJWT<3.0.0,>=2.0.1"]
 requires-python = ">=3.7"
-dynamic = ["classifiers"]
 license = {text = "MIT"}
 readme = "README.md"
 

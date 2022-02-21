@@ -333,7 +333,7 @@ def provide(host: str = "0.0.0.0", port: int = 2005, isasync: bool = False,
             server.shutdown()
 
 
-def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange: int = 1000000, threadNum: int = 25,
+def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", prefix: str = "", suffix: str = "", maxRange: int = 1000000, threadNum: int = 25,
              hashType: HashType = HashType.MD5) -> str:
     """A function used to blast the first few bits of the hash, often used to crack the ctf verification code.
 
@@ -341,6 +341,8 @@ def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange:
         startIndex (int, optional): argument answer start index. Defaults to 0.
         endIndex (int, optional): argument answer end index. Defaults to 5.
         answer (str, optional): Part of the result hash. Defaults to "".
+        prefix (str, optional): Set the prefix of the original value. Defaults to "".
+        suffix (str, optional): Set the suffix of the original value. Defaults to "".
         maxRange (int, optional): burte force number max range. Defaults to 1000000.
         threadNum (int, optional): thread number. Defaults to 25.
         hashType (HashType, optional): burte force hash type. Defaults to HashType.MD5.
@@ -361,6 +363,8 @@ def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange:
         print(hashAuth(answer="c907773", endIndex=7, threadNum=50))
         ### Make the range bigger!!
         print(hashAuth(answer="59e711d", endIndex=7, maxRange=2000000))
+        ### If the challenge requires the calculation of `md5("WTF" + ??) = "ba25a77"`
+        print(hashAuth(answer="ba25a77", prefix="WTF"))
     """
     if hashType not in HASHTYPE_DICT:
         raise HashAuthArgumentError("HashType type error")
@@ -385,7 +389,7 @@ def hashAuth(startIndex: int = 0, endIndex: int = 5, answer: str = "", maxRange:
                 guess = next(i)
             except StopIteration:
                 break
-            if hashfunc(str(guess).encode()).hexdigest()[startIndex:endIndex] == answer:
+            if hashfunc((prefix + str(guess) + suffix).encode()).hexdigest()[startIndex:endIndex] == answer:
                 context.value = True
                 return guess
         return -1

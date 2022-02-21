@@ -10,6 +10,7 @@ class TestWeb(unittest.TestCase):
         self.assertEqual(hashAuth(answer="d13ce", hashType=HashType.SHA1), "16221")
         self.assertEqual(hashAuth(answer="c907773", endIndex=7, threadNum=50), "500000")
         self.assertEqual(hashAuth(answer="59e711d", endIndex=7, maxRange=2000000), "1000001")
+        self.assertEqual(hashAuth(answer="ba25a77", prefix="WTF"), "233")
 
     def test_get_flask_pin(self):
         self.assertEqual(get_flask_pin("kingkk", "/home/kingkk/.local/lib/python3.5/site-packages/flask/app.py",

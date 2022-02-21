@@ -1,8 +1,8 @@
 [main]
-  serialize = "{version}-{banner}"
   extraCommands = ["pdm run publish", "git push", "git push --tags"]
+  serialize = "{version}-{banner}"
   tag = true
-  version = "1.10.0"
+  version = "1.11.0"
 
 [[operate]]
   location = "pyproject.toml"

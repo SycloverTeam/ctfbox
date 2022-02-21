@@ -173,6 +173,10 @@ Other
 - [Morouu](http://github.com/Morouu)
 
 ## Logs
+
+### 1.11.0
+- update some function:
+    - hashAuth: add prefix and suffix arguments
 ### 1.10.0
 - remove dependencies:
     - python-socketio[client]==4.6.0

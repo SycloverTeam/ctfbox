@@ -15,6 +15,8 @@ class TestWeb(unittest.TestCase):
     def test_get_flask_pin(self):
         self.assertEqual(get_flask_pin("kingkk", "/home/kingkk/.local/lib/python3.5/site-packages/flask/app.py",
                                        "00:0c:29:e5:45:6a", "19949f18ce36422da1402b3e3fe53008"), "169-851-075")
+        self.assertEqual(get_flask_pin("ctf", "/usr/local/lib/python3.8/site-packages/flask/app.py",
+                                       "02:42:ac:15:00:03", "1cc402dd0e11d5ae18db04a6de87223d", 200), "943-044-403")
 
     def test_httpraw(self):
         # test get request and headers

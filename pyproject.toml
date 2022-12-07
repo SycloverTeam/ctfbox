@@ -1,6 +1,6 @@
 [project]
 name = "ctfbox"
-version = "1.11.0"
+version = "1.12.0"
 description = "A box for CTF challenges with some sugar functions, Just enjoy it"
 authors = [
     "Syclover <>",

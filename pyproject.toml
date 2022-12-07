@@ -3,12 +3,12 @@ name = "ctfbox"
 version = "1.12.0"
 description = "A box for CTF challenges with some sugar functions, Just enjoy it"
 authors = [
-    "Syclover <>",
-    "Longlone <toloveu29@gmail.com>",
-    "pjx <pjx3231@163.com>",
-    "lingze <lingze.wl@gmail.com>",
-    "F4ded <452584023@qq.com>",
-    "AFKL <afkl1919@qq.com>",
+    {name="Syclover"},
+    {name="Longlone", email="toloveu29@gmail.com"},
+    {name="pjx", email="pjx3231@163.com"},
+    {name="lingze", email="lingze.wl@gmail.com"},
+    {name="F4ded", email="452584023@qq.com"},
+    {name="AFKL", email="afkl1919@qq.com"}
 ]
 dependencies = [
     "requests<3.0.0,>=2.25.1",

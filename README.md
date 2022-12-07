@@ -89,6 +89,8 @@ Some useful functions, close to intuition
   - write crontab: `gopherredis_crontab()`
   - ssh authorized keys: `gopherredis_ssh()`
   - rce by master-slave replication: `gopherredis_msr()`
+- generate gopher payload for attack fastcgi
+  - arbitrary code execution: `gopherfastcgi_code()`
 - source code leaks, support .git .svn .DS_Store: `leakdump()`
 - reverse mt_rand seed without brute force: `reverse_mt_rand()`
 
@@ -174,6 +176,10 @@ Other
 
 ## Logs
 
+### 1.12.0
+- add a function:
+    - web
+        - gopherfastcgi_code
 ### 1.11.0
 - update some function:
     - hashAuth: add prefix and suffix arguments

@@ -34,6 +34,7 @@ def analysis(global_dict: dict, allowed_modules: list) -> list:
 
 __all__ = analysis(globals(), ["ctfbox.utils.utils",
                                "ctfbox.web.web",
+                               "ctfbox.web.fpm",
                                "ctfbox.reverse.reverse",
                                "ctfbox.misc.misc",
                                "ctfbox.crypto.crypto",

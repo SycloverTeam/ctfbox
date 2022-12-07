@@ -2,7 +2,7 @@
   extraCommands = ["pdm run publish", "git push", "git push --tags"]
   serialize = "{version}-{banner}"
   tag = true
-  version = "1.12.0"
+  version = "1.12.1"
 
 [[operate]]
   location = "pyproject.toml"

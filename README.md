@@ -1,7 +1,7 @@
 ## ctfbox 
 **A box for CTF challenges with some sugar functions, Just enjoy it**
 
-Current version: **1.12.4**
+Current version: **1.12.5**
 
 [中文文档点这里](README_CN.md)
 

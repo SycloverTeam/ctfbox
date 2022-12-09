@@ -3,7 +3,7 @@ import binhex
 import binascii
 from bz2 import decompress as bz2decompress
 from concurrent.futures import ThreadPoolExecutor
-import codecs 
+import codecs
 from functools import wraps
 from hashlib import md5 as _md5
 from hashlib import sha1 as _sha1
@@ -20,7 +20,7 @@ from string import ascii_lowercase, digits
 from traceback import format_exc, print_exc
 from typing import Dict, Union
 import uu
-import urllib.parse 
+import urllib.parse
 import io
 
 
@@ -149,7 +149,7 @@ class ProvideHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         sendReply = False
-        querypath = urlparse(self.path)
+        querypath = urllib.parse.urlparse(self.path)
         filepath = querypath.path
         try:
             for fileInfo in self.serveFiles:
@@ -202,12 +202,12 @@ class BlindXXEHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         sendReply = False
-        querypath = urlparse(self.path)
+        querypath = urllib.parse.urlparse(self.path)
         query_dict = {}
         for kv in querypath.query.split("&"):
             v = kv.split("=")
             if len(v) > 1:
-                query_dict[v[0]] = unquote_plus(v[1])
+                query_dict[v[0]] = urllib.parse.unquote_plus(v[1])
             else:
                 query_dict[v[0]] = None
         filepath = querypath.path
@@ -236,7 +236,7 @@ class BlindXXEHandler(BaseHTTPRequestHandler):
             else:
                 data = querypath.query
                 try:
-                    data = b64decode(data)
+                    data = base64.b64decode(data)
                     data = bz2decompress(data)
                 except Exception:
                     pass
@@ -255,7 +255,7 @@ class BlindXXEHandler(BaseHTTPRequestHandler):
 
 def url_encode(s: str, encoding: str = 'utf-8') -> str:
     try:
-        return quote_plus(s, encoding=encoding)
+        return urllib.parse.quote_plus(s, encoding=encoding)
     except Exception:
         return ""
 
@@ -278,49 +278,49 @@ def force_url_encode(data: str) -> str:
 
 def url_decode(s: str, encoding: str = 'utf-8') -> str:
     try:
-        return unquote_plus(s, encoding=encoding)
+        return urllib.parse.unquote_plus(s, encoding=encoding)
     except Exception:
         return ""
 
 
 def base64_decode(s: str, encoding='utf-8') -> str:
     try:
-        return b64decode(s.encode()).decode(encoding=encoding)
+        return base64.b64decode(s.encode()).decode(encoding=encoding)
     except Exception:
         return ""
 
 
 def base64_encode(s: str, encoding='utf-8') -> str:
     try:
-        return b64encode(s.encode()).decode(encoding=encoding)
+        return base64.b64encode(s.encode()).decode(encoding=encoding)
     except Exception:
         return ""
 
 
 def base32_decode(s: str, encoding='utf-8') -> str:
     try:
-        return b32decode(s.encode()).decode(encoding=encoding)
+        return base64.b32decode(s.encode()).decode(encoding=encoding)
     except Exception:
         return ""
 
 
 def base32_encode(s: str, encoding='utf-8') -> str:
     try:
-        return b32encode(s.encode()).decode(encoding=encoding)
+        return base64.b32encode(s.encode()).decode(encoding=encoding)
     except Exception:
         return ""
 
 
 def base16_decode(s: str, encoding='utf-8') -> str:
     try:
-        return b16decode(s.encode()).decode(encoding=encoding)
+        return base64.b16decode(s.encode()).decode(encoding=encoding)
     except Exception:
         return ""
 
 
 def base16_encode(s: str, encoding='utf-8') -> str:
     try:
-        return b16encode(s.encode()).decode(encoding=encoding)
+        return base64.b16encode(s.encode()).decode(encoding=encoding)
     except Exception:
         return ""
 
@@ -348,14 +348,14 @@ def html_encode(s: str, asHex: bool = False) -> str:
 
 def bin2hex(s: str) -> str:
     try:
-        return hexlify(s.encode()).decode()
+        return binascii.hexlify(s.encode()).decode()
     except Exception:
         return ""
 
 
 def hex2bin(s: str) -> str:
     try:
-        return unhexlify(s).decode()
+        return binascii.unhexlify(s).decode()
     except Exception:
         return ""
 
@@ -422,9 +422,9 @@ def jwt_encode(header: dict, payload: dict, key=None, algorithm=None) -> str:
         hearder_json = dumps(header, sort_keys=True, separators=(',', ':'))
         payload_json = dumps(payload, sort_keys=True, separators=(',', ':'))
         # json to base64
-        header_b64 = urlsafe_b64encode(
+        header_b64 = urllib.parse.urlsafe_b64encode(
             hearder_json.encode()).replace(b'=', b'')
-        payload_b64 = urlsafe_b64encode(
+        payload_b64 = urllib.parse.urlsafe_b64encode(
             payload_json.encode()).replace(b'=', b'')
 
         return (header_b64 + b'.' + payload_b64).decode()
@@ -439,7 +439,7 @@ def jwt_decode(token: str) -> bytes:
             padding = 4 - len(each) % 4
             if padding:
                 each += ('=' * padding)
-            data[i] = urlsafe_b64decode(each.encode())
+            data[i] = urllib.parse.urlsafe_b64decode(each.encode())
     except Exception:
         pass
 
@@ -482,7 +482,8 @@ def rot_encode(data: str, n: int) -> str:
     def rot_char(c): return trans[chars.find(c)] if chars.find(c) > -1 else c
     return ''.join(rot_char(c) for c in data)
 
-def auto_decode(s: str) -> Dict[str,str]:
+
+def auto_decode(s: str) -> Dict[str, str]:
     """Decrypted in the usual way
 
     Args:
@@ -501,6 +502,7 @@ def auto_decode(s: str) -> Dict[str,str]:
     """
     return _atdecode(s.encode())
 
+
 def _wrap_uu(func):
     def new_func(in_bytes):
         in_file = io.BytesIO(in_bytes)
@@ -510,6 +512,7 @@ def _wrap_uu(func):
         return out_file.read()
     return new_func
 
+
 def _wrap_rot13(func):
     def new_func(in_bytes):
         in_str = in_bytes.decode()
@@ -517,12 +520,14 @@ def _wrap_rot13(func):
         return out_str.encode()
     return new_func
 
+
 def _wrap_html(func):
     def new_func(in_bytes):
         in_str = in_bytes.decode()
         out_str = func(in_str)
         return out_str.encode()
     return new_func
+
 
 _funcs = collections.OrderedDict()
 _funcs['Base64'] = base64.standard_b64decode
@@ -533,6 +538,8 @@ _funcs['Base85'] = base64.b85decode
 _funcs['Uuencoding'] = _wrap_uu(uu.decode)
 _funcs['ROT13'] = _wrap_rot13(codecs.decode)
 _funcs['HTML'] = _wrap_html(html.unescape)
+
+
 def _decode_bytes(unknown_bytes, func, encoding):
     decoded_bytes = None
     try:
@@ -547,8 +554,9 @@ def _decode_bytes(unknown_bytes, func, encoding):
         pass
     return decoded_bytes
 
+
 def _atdecode(unknown_bytes):
-    failed_encodings = []  
+    failed_encodings = []
     no_difference = []
     output_dict = collections.OrderedDict()
     for name, func in _funcs.items():
@@ -564,14 +572,11 @@ def _atdecode(unknown_bytes):
                     output_dict[name] = repr(decoded_bytes)
         else:
             failed_encodings.append(name)
-    ans={}
+    ans = {}
     if output_dict:
         column_chars = max([len(name) for name in output_dict.keys()])
         for name, output in output_dict.items():
-            ans[name.ljust(column_chars)]=("{}".format(output))
-    ans["Error"]=(", ".join(failed_encodings))
-    ans["No change"]=(", ".join(no_difference))
+            ans[name.ljust(column_chars)] = ("{}".format(output))
+    ans["Error"] = (", ".join(failed_encodings))
+    ans["No change"] = (", ".join(no_difference))
     return ans
-
-
-

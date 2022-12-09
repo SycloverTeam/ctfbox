@@ -176,10 +176,15 @@ Other
 
 ## Logs
 
+### 1.12.5
+- fix a bug:
+    - utils
+        - can't work 
 ### 1.12.0
 - add a function:
     - web
         - gopherfastcgi_code
+
 ### 1.11.0
 - update some function:
     - hashAuth: add prefix and suffix arguments
